@@ -2,14 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Unified Chat Sidebar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Whispers · Responsive Messenger</title>
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background: #121212;
@@ -20,6 +25,8 @@
       overflow: hidden;
       transition: background 0.2s;
     }
+
+    /* CSS Variables */
     :root {
       --app-bg: #f0f2f5;
       --sidebar-bg: #ffffff;
@@ -46,7 +53,11 @@
       --time-color: #6b6f76;
       --border-color: #e9ecef;
     }
-    body { background: var(--app-bg); }
+
+    body {
+      background: var(--app-bg);
+    }
+
     .whispers-app {
       width: 100%;
       max-width: 1100px;
@@ -55,11 +66,18 @@
       background: var(--app-bg);
       border-radius: 32px;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
-      display: flex;
       overflow: hidden;
       transition: background 0.2s;
+      position: relative;
     }
-    /* Sidebar */
+
+    /* Desktop/tablet layout: sidebar + main chat */
+    .desktop-layout {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -67,12 +85,15 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: transform 0.3s ease;
     }
+
     .sidebar-header {
       padding: 16px;
       background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
       color: white;
     }
+
     .sidebar-header h2 {
       font-size: 20px;
       font-weight: 600;
@@ -80,16 +101,19 @@
       align-items: center;
       gap: 8px;
     }
+
     .sidebar-header p {
       font-size: 12px;
       opacity: 0.8;
       margin-top: 4px;
     }
+
     .chat-list {
       flex: 1;
       overflow-y: auto;
       padding: 8px 0;
     }
+
     .chat-list-item {
       display: flex;
       align-items: center;
@@ -99,11 +123,16 @@
       transition: background 0.1s;
       border-left: 3px solid transparent;
     }
-    .chat-list-item:hover { background: var(--sidebar-hover); }
+
+    .chat-list-item:hover {
+      background: var(--sidebar-hover);
+    }
+
     .chat-list-item.active {
       background: var(--sidebar-active);
       border-left-color: var(--header-gradient-start);
     }
+
     .chat-avatar {
       width: 48px;
       height: 48px;
@@ -116,10 +145,12 @@
       font-size: 20px;
       flex-shrink: 0;
     }
+
     .chat-info {
       flex: 1;
       min-width: 0;
     }
+
     .chat-name {
       font-weight: 600;
       font-size: 15px;
@@ -127,6 +158,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
     .chat-preview {
       font-size: 12px;
       color: var(--time-color);
@@ -135,6 +167,7 @@
       text-overflow: ellipsis;
       margin-top: 2px;
     }
+
     .new-chat-btn {
       margin: 12px;
       padding: 10px;
@@ -149,8 +182,11 @@
       justify-content: center;
       gap: 8px;
     }
-    .new-chat-btn:hover { background: var(--send-btn-hover); }
-    /* Main chat area */
+
+    .new-chat-btn:hover {
+      background: var(--send-btn-hover);
+    }
+
     .main-chat {
       flex: 1;
       display: flex;
@@ -159,6 +195,7 @@
       background: var(--chat-bg);
       background-image: var(--chat-bg-pattern);
     }
+
     .chat-header {
       background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
       padding: 14px 20px;
@@ -167,6 +204,7 @@
       justify-content: space-between;
       color: var(--header-text);
     }
+
     .chat-title {
       font-size: 18px;
       font-weight: 600;
@@ -174,14 +212,17 @@
       align-items: center;
       gap: 8px;
     }
+
     .chat-subtitle {
       font-size: 12px;
       opacity: 0.9;
     }
+
     .admin-controls {
       display: flex;
       gap: 8px;
     }
+
     .btn-icon {
       background: rgba(255,255,255,0.2);
       border: none;
@@ -190,7 +231,14 @@
       height: 34px;
       border-radius: 40px;
       cursor: pointer;
+      transition: 0.2s;
     }
+
+    .btn-icon:hover {
+      background: rgba(255,255,255,0.35);
+      transform: scale(0.96);
+    }
+
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -199,13 +247,21 @@
       flex-direction: column;
       gap: 12px;
     }
+
     .message-row {
       display: flex;
       width: 100%;
       animation: fadeSlideUp 0.2s;
     }
-    .message-row.sent { justify-content: flex-end; }
-    .message-row.received { justify-content: flex-start; }
+
+    .message-row.sent {
+      justify-content: flex-end;
+    }
+
+    .message-row.received {
+      justify-content: flex-start;
+    }
+
     .message-bubble {
       max-width: 78%;
       padding: 10px 14px;
@@ -213,16 +269,19 @@
       position: relative;
       box-shadow: 0 1px 1px rgba(0,0,0,0.05);
     }
+
     .sent .message-bubble {
       background: var(--sent-bubble);
       border-bottom-right-radius: 6px;
       color: var(--sent-bubble-text);
     }
+
     .received .message-bubble {
       background: var(--received-bubble);
       border-bottom-left-radius: 6px;
       color: var(--received-bubble-text);
     }
+
     .sender-name {
       font-size: 12px;
       font-weight: 600;
@@ -232,13 +291,22 @@
       gap: 6px;
       color: var(--sender-name-color);
     }
-    .received .sender-name { color: var(--received-sender-color); }
+
+    .received .sender-name {
+      color: var(--received-sender-color);
+    }
+
     .message-text {
       font-size: 14px;
       line-height: 1.4;
       word-break: break-word;
     }
-    .message-text a { color: #075e54; text-decoration: none; }
+
+    .message-text a {
+      color: #075e54;
+      text-decoration: none;
+    }
+
     .attachment {
       margin-top: 8px;
       background: rgba(0,0,0,0.05);
@@ -248,17 +316,22 @@
       align-items: center;
       gap: 8px;
     }
-    .attachment img, .attachment video, .attachment audio {
+
+    .attachment img,
+    .attachment video,
+    .attachment audio {
       max-width: 100%;
       max-height: 200px;
       border-radius: 8px;
     }
+
     .message-time {
       font-size: 10px;
       color: var(--time-color);
       margin-top: 5px;
       text-align: right;
     }
+
     .input-area {
       background: var(--input-area-bg);
       padding: 12px 16px;
@@ -267,6 +340,7 @@
       gap: 8px;
       border-top: 1px solid var(--border-color);
     }
+
     .input-area input {
       flex: 1;
       border: none;
@@ -276,6 +350,7 @@
       font-size: 15px;
       outline: none;
     }
+
     .input-area button {
       background: var(--send-btn-bg);
       border: none;
@@ -286,23 +361,87 @@
       cursor: pointer;
       font-size: 20px;
     }
+
     .attach-btn {
       background: var(--simulate-btn-bg);
       color: var(--simulate-btn-text);
       width: auto;
       padding: 0 12px;
     }
+
+    /* Mobile layout */
+    .mobile-layout {
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    .mobile-view {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: var(--app-bg);
+      transition: transform 0.3s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mobile-view.list-view {
+      transform: translateX(0);
+    }
+
+    .mobile-view.chat-view {
+      transform: translateX(100%);
+    }
+
+    .mobile-view.active-chat {
+      transform: translateX(0);
+    }
+
+    .mobile-view.hidden-list {
+      transform: translateX(-100%);
+    }
+
+    .mobile-header {
+      background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+    }
+
+    .mobile-back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .mobile-chat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Modals */
     .modal {
       display: none;
       position: fixed;
-      top:0; left:0;
-      width:100%; height:100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0,0,0,0.6);
       align-items: center;
       justify-content: center;
       z-index: 1000;
       backdrop-filter: blur(4px);
     }
+
     .modal-card {
       background: white;
       width: 340px;
@@ -313,14 +452,20 @@
       max-height: 85vh;
       overflow-y: auto;
     }
-    .modal-card h3 { margin-bottom: 12px; }
-    .modal-card input, .modal-card select {
+
+    .modal-card h3 {
+      margin-bottom: 12px;
+    }
+
+    .modal-card input,
+    .modal-card select {
       width: 100%;
       margin: 8px 0;
       padding: 8px 12px;
       border-radius: 40px;
       border: 1px solid #ccc;
     }
+
     .modal-card button {
       background: #075e54;
       color: white;
@@ -330,7 +475,14 @@
       margin: 5px;
       cursor: pointer;
     }
-    .theme-grid { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+
+    .theme-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
     .theme-btn {
       background: #f0f2f5;
       border: 1px solid #ddd;
@@ -340,37 +492,85 @@
       display: flex;
       justify-content: space-between;
     }
+
     @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    /* Responsive: if screen too narrow, revert to stacked layout */
-    @media (max-width: 600px) {
-      .sidebar { width: 240px; }
+
+    /* Responsive: hide sidebar on mobile, show mobile layout */
+    @media (max-width: 768px) {
+      .desktop-layout {
+        display: none;
+      }
+
+      .mobile-layout {
+        display: block;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-layout {
+        display: none;
+      }
+
+      .desktop-layout {
+        display: flex;
+      }
     }
   </style>
 </head>
 <body>
 
 <div class="whispers-app">
-  <!-- Sidebar with chat list -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
-      <p>All conversations</p>
+  <!-- Desktop/Tablet Layout -->
+  <div class="desktop-layout">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
+        <p>All conversations</p>
+      </div>
+      <div class="chat-list" id="desktopChatList"></div>
+      <button class="new-chat-btn" id="desktopNewChatBtn"><i class="fas fa-plus"></i> New Private Chat</button>
     </div>
-    <div class="chat-list" id="chatList"></div>
-    <button class="new-chat-btn" id="newChatSidebarBtn"><i class="fas fa-plus"></i> New Private Chat</button>
+    <div class="main-chat">
+      <div class="chat-header" id="desktopChatHeader"></div>
+      <div class="chat-messages" id="desktopChatMessages"></div>
+      <div class="input-area">
+        <button id="desktopAttachBtn" class="attach-btn"><i class="fas fa-paperclip"></i></button>
+        <input type="text" id="desktopMessageInput" placeholder="Aa" autocomplete="off">
+        <button id="desktopSendBtn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
   </div>
 
-  <!-- Main chat area -->
-  <div class="main-chat">
-    <div class="chat-header" id="chatHeader"></div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="input-area">
-      <button id="attachBtn" class="attach-btn"><i class="fas fa-paperclip"></i></button>
-      <input type="text" id="messageInput" placeholder="Aa" autocomplete="off">
-      <button id="sendMsgBtn"><i class="fas fa-paper-plane"></i></button>
+  <!-- Mobile Layout -->
+  <div class="mobile-layout">
+    <div id="mobileListView" class="mobile-view list-view">
+      <div class="mobile-header">
+        <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
+      </div>
+      <div class="mobile-chat-list" id="mobileChatList"></div>
+      <button class="new-chat-btn" id="mobileNewChatBtn"><i class="fas fa-plus"></i> New Private Chat</button>
+    </div>
+    <div id="mobileChatView" class="mobile-view chat-view">
+      <div class="mobile-header">
+        <button id="mobileBackBtn" class="mobile-back-btn"><i class="fas fa-arrow-left"></i></button>
+        <div id="mobileChatTitle" style="flex:1; font-weight:600;"></div>
+        <div id="mobileAdminControls"></div>
+      </div>
+      <div class="chat-messages" id="mobileChatMessages"></div>
+      <div class="input-area">
+        <button id="mobileAttachBtn" class="attach-btn"><i class="fas fa-paperclip"></i></button>
+        <input type="text" id="mobileMessageInput" placeholder="Aa" autocomplete="off">
+        <button id="mobileSendBtn"><i class="fas fa-paper-plane"></i></button>
+      </div>
     </div>
   </div>
 </div>
@@ -412,7 +612,13 @@
     <button id="closeAddMemberBtn">Cancel</button>
   </div>
 </div>
-<div id="themeModal" class="modal"><div class="modal-card"><h3>Themes</h3><div id="themeListContainer"></div><button id="closeThemeModal">Close</button></div></div>
+<div id="themeModal" class="modal">
+  <div class="modal-card">
+    <h3>Themes</h3>
+    <div id="themeListContainer"></div>
+    <button id="closeThemeModal">Close</button>
+  </div>
+</div>
 
 <script>
   // ---------- DATA MODELS ----------
@@ -424,6 +630,7 @@
   let currentChat = { type: 'group', id: null };
   let isGroupAdmin = false;
   let currentThemeId = "light";
+  let isMobile = window.innerWidth <= 768;
 
   const DEFAULT_MEMBERS = [
     { id: "alexia", name: "Alexia" },
@@ -476,7 +683,7 @@
       privateChats.push({ userId, name, lastMessage: lastMsg, lastTimestamp: timestamp });
     }
     saveAll();
-    renderChatList();
+    renderChatLists();
   }
 
   function addSystemNotification(text, chatType='group', chatId=null) {
@@ -488,44 +695,76 @@
       updatePrivateChatPreview(chatId, msg.text, msg.timestamp);
       if(currentChat.type==='private' && currentChat.id===chatId) renderMessages();
     }
-    renderChatList();
+    renderChatLists();
   }
 
-  // ---------- RENDERING ----------
-  function renderChatList() {
-    const container = document.getElementById("chatList");
-    container.innerHTML = "";
-    // Group chat
-    let groupItem = document.createElement("div");
-    groupItem.className = "chat-list-item";
-    if(currentChat.type==='group') groupItem.classList.add("active");
-    groupItem.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div>
-      <div class="chat-info"><div class="chat-name">${localStorage.getItem("whispers_groupName")}</div>
-      <div class="chat-preview">${groupMessages[groupMessages.length-1]?.text || "No messages"}</div></div>`;
-    groupItem.addEventListener("click",()=>{ currentChat={type:'group',id:null}; renderActiveChat(); renderChatList(); });
-    container.appendChild(groupItem);
-    // Private chats
-    privateChats.sort((a,b)=>(b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
-    privateChats.forEach(chat=>{
-      let item = document.createElement("div");
-      item.className = "chat-list-item";
-      if(currentChat.type==='private' && currentChat.id===chat.userId) item.classList.add("active");
-      item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div>
-        <div class="chat-info"><div class="chat-name">${escapeHtml(chat.name)}</div>
-        <div class="chat-preview">${chat.lastMessage || "Start chatting"}</div></div>`;
-      item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; renderActiveChat(); renderChatList(); });
-      container.appendChild(item);
-    });
+  // ---------- RENDERING HELPERS ----------
+  function renderChatLists() {
+    // Desktop
+    const desktopContainer = document.getElementById("desktopChatList");
+    if(desktopContainer) {
+      desktopContainer.innerHTML = "";
+      // Group chat
+      let groupItem = createChatListItem('group', null, localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
+      groupItem.addEventListener("click",()=>{ currentChat={type:'group',id:null}; renderActiveChatDesktop(); renderChatLists(); });
+      desktopContainer.appendChild(groupItem);
+      // Private chats
+      privateChats.sort((a,b)=>(b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
+      privateChats.forEach(chat=>{
+        let item = createChatListItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
+        item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; renderActiveChatDesktop(); renderChatLists(); });
+        desktopContainer.appendChild(item);
+      });
+      // Highlight active
+      document.querySelectorAll("#desktopChatList .chat-list-item").forEach(el => {
+        let type = el.dataset.type;
+        let id = el.dataset.id;
+        if (type === currentChat.type && (id === (currentChat.id || null))) el.classList.add("active");
+        else el.classList.remove("active");
+      });
+    }
+
+    // Mobile list
+    const mobileContainer = document.getElementById("mobileChatList");
+    if(mobileContainer) {
+      mobileContainer.innerHTML = "";
+      let groupItem = createChatListItem('group', null, localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
+      groupItem.addEventListener("click",()=>{ currentChat={type:'group',id:null}; showMobileChatView(); renderActiveChatMobile(); renderChatLists(); });
+      mobileContainer.appendChild(groupItem);
+      privateChats.forEach(chat=>{
+        let item = createChatListItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
+        item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; showMobileChatView(); renderActiveChatMobile(); renderChatLists(); });
+        mobileContainer.appendChild(item);
+      });
+    }
   }
 
-  function renderActiveChat() {
-    renderHeader();
-    renderMessages();
+  function createChatListItem(type, id, name, preview) {
+    let div = document.createElement("div");
+    div.className = "chat-list-item";
+    div.dataset.type = type;
+    div.dataset.id = id || "";
+    div.innerHTML = `
+      <div class="chat-avatar"><i class="${type==='group' ? 'fas fa-users' : 'fas fa-user'}"></i></div>
+      <div class="chat-info">
+        <div class="chat-name">${escapeHtml(name)}</div>
+        <div class="chat-preview">${escapeHtml(preview.substring(0, 40))}</div>
+      </div>
+    `;
+    return div;
   }
 
-  function renderMessages() {
-    let container = document.getElementById("chatMessages");
-    let messages = currentChat.type==='group' ? groupMessages : (privateMessages[currentChat.id] || []);
+  function renderActiveChatDesktop() {
+    renderDesktopHeader();
+    renderDesktopMessages();
+  }
+
+  function renderActiveChatMobile() {
+    renderMobileHeader();
+    renderMobileMessages();
+  }
+
+  function renderMessagesCommon(container, messages) {
     container.innerHTML = "";
     messages.forEach(msg => {
       let row = document.createElement("div");
@@ -558,8 +797,20 @@
     container.scrollTop = container.scrollHeight;
   }
 
-  function renderHeader() {
-    let header = document.getElementById("chatHeader");
+  function renderDesktopMessages() {
+    let container = document.getElementById("desktopChatMessages");
+    let messages = currentChat.type==='group' ? groupMessages : (privateMessages[currentChat.id] || []);
+    renderMessagesCommon(container, messages);
+  }
+
+  function renderMobileMessages() {
+    let container = document.getElementById("mobileChatMessages");
+    let messages = currentChat.type==='group' ? groupMessages : (privateMessages[currentChat.id] || []);
+    renderMessagesCommon(container, messages);
+  }
+
+  function renderDesktopHeader() {
+    let header = document.getElementById("desktopChatHeader");
     let title="", subtitle="";
     if(currentChat.type==='group') {
       title = localStorage.getItem("whispers_groupName");
@@ -577,23 +828,52 @@
       </div>
       <div class="admin-controls">
         ${currentChat.type==='group' ? `
-          <button class="btn-icon" id="addMemberBtn" title="Add Member"><i class="fas fa-user-plus"></i></button>
-          <button class="btn-icon" id="adminLoginBtn"><i class="fas fa-user-shield"></i></button>
-          <button class="btn-icon" id="adminLogoutBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-sign-out-alt"></i></button>
-          <button class="btn-icon" id="themeBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-palette"></i></button>
+          <button class="btn-icon" id="desktopAddMemberBtn" title="Add Member"><i class="fas fa-user-plus"></i></button>
+          <button class="btn-icon" id="desktopAdminLoginBtn"><i class="fas fa-user-shield"></i></button>
+          <button class="btn-icon" id="desktopAdminLogoutBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-sign-out-alt"></i></button>
+          <button class="btn-icon" id="desktopThemeBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-palette"></i></button>
         ` : ''}
       </div>
     `;
     if(currentChat.type==='group') {
-      document.getElementById("addMemberBtn")?.addEventListener("click", showAddMemberModal);
-      document.getElementById("adminLoginBtn")?.addEventListener("click", showAdminLogin);
-      document.getElementById("adminLogoutBtn")?.addEventListener("click", adminLogout);
-      document.getElementById("themeBtn")?.addEventListener("click", openThemeModal);
+      document.getElementById("desktopAddMemberBtn")?.addEventListener("click", showAddMemberModal);
+      document.getElementById("desktopAdminLoginBtn")?.addEventListener("click", showAdminLogin);
+      document.getElementById("desktopAdminLogoutBtn")?.addEventListener("click", adminLogout);
+      document.getElementById("desktopThemeBtn")?.addEventListener("click", openThemeModal);
+    }
+  }
+
+  function renderMobileHeader() {
+    let titleDiv = document.getElementById("mobileChatTitle");
+    let adminControls = document.getElementById("mobileAdminControls");
+    let title="", subtitle="";
+    if(currentChat.type==='group') {
+      title = localStorage.getItem("whispers_groupName");
+      subtitle = `Group · ${groupMembers.length} members`;
+    } else {
+      let chat = privateChats.find(c=>c.userId===currentChat.id);
+      title = chat ? chat.name : currentChat.id;
+      subtitle = "Private chat";
+    }
+    titleDiv.innerHTML = `<div><div class="chat-title" style="font-size:16px;">${escapeHtml(title)}</div><div class="chat-subtitle" style="font-size:10px;">${subtitle}</div></div>`;
+    adminControls.innerHTML = currentChat.type==='group' ? `
+      <button class="btn-icon" id="mobileAddMemberBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-user-plus"></i></button>
+      <button class="btn-icon" id="mobileAdminLoginBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-user-shield"></i></button>
+      <button class="btn-icon" id="mobileAdminLogoutBtn" style="display:${isGroupAdmin?'flex':'none'}; background:rgba(255,255,255,0.2);"><i class="fas fa-sign-out-alt"></i></button>
+      <button class="btn-icon" id="mobileThemeBtn" style="display:${isGroupAdmin?'flex':'none'}; background:rgba(255,255,255,0.2);"><i class="fas fa-palette"></i></button>
+    ` : '';
+    if(currentChat.type==='group') {
+      setTimeout(() => {
+        document.getElementById("mobileAddMemberBtn")?.addEventListener("click", showAddMemberModal);
+        document.getElementById("mobileAdminLoginBtn")?.addEventListener("click", showAdminLogin);
+        document.getElementById("mobileAdminLogoutBtn")?.addEventListener("click", adminLogout);
+        document.getElementById("mobileThemeBtn")?.addEventListener("click", openThemeModal);
+      }, 100);
     }
   }
 
   // ---------- MESSAGING ----------
-  function sendMessageWithAttachments(text, attachments=[]) {
+  function sendMessageWithAttachments(text, attachments, isMobileDevice) {
     if(!text.trim() && attachments.length===0) return;
     let msg = {
       id: Date.now(),
@@ -606,18 +886,19 @@
     if(currentChat.type==='group') {
       groupMessages.push(msg);
       saveAll();
-      renderMessages();
+      if(isMobileDevice) renderMobileMessages(); else renderDesktopMessages();
     } else {
       if(!privateMessages[currentChat.id]) privateMessages[currentChat.id]=[];
       privateMessages[currentChat.id].push(msg);
       updatePrivateChatPreview(currentChat.id, text || (attachments[0]?.name || "Attachment"), msg.timestamp);
-      renderMessages();
+      if(isMobileDevice) renderMobileMessages(); else renderDesktopMessages();
     }
-    document.getElementById("messageInput").value = "";
-    renderChatList();
+    let input = isMobileDevice ? document.getElementById("mobileMessageInput") : document.getElementById("desktopMessageInput");
+    if(input) input.value = "";
+    renderChatLists();
   }
 
-  function attachFile() {
+  function attachFile(isMobileDevice) {
     let input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,video/*,audio/*,application/pdf,.doc,.docx,.txt";
@@ -632,7 +913,7 @@
       else attType = 'document';
       reader.onload = ev => {
         let attachment = { type: attType, data: ev.target.result, name: file.name };
-        sendMessageWithAttachments("", [attachment]);
+        sendMessageWithAttachments("", [attachment], isMobileDevice);
       };
       reader.readAsDataURL(file);
     };
@@ -650,7 +931,8 @@
     addSystemNotification(`${name} joined the group!`, 'group');
     document.getElementById("addMemberModal").style.display = "none";
     document.getElementById("newMemberName").value = "";
-    renderHeader();
+    renderChatLists();
+    if(!isMobile) renderDesktopHeader(); else renderMobileHeader();
   }
   function showAdminLogin() {
     let pwd = prompt("Enter admin password:");
@@ -658,10 +940,10 @@
       isGroupAdmin = true;
       localStorage.setItem("whispers_admin", "true");
       addSystemNotification("Admin mode activated.", 'group');
-      renderHeader();
+      if(!isMobile) renderDesktopHeader(); else renderMobileHeader();
     } else alert("Wrong password");
   }
-  function adminLogout() { isGroupAdmin=false; localStorage.removeItem("whispers_admin"); addSystemNotification("Admin mode deactivated.", 'group'); renderHeader(); }
+  function adminLogout() { isGroupAdmin=false; localStorage.removeItem("whispers_admin"); addSystemNotification("Admin mode deactivated.", 'group'); if(!isMobile) renderDesktopHeader(); else renderMobileHeader(); }
 
   // ---------- AUTH ----------
   function registerUser(username, password, displayName) {
@@ -693,11 +975,35 @@
     loadData();
     loadTheme();
     if(localStorage.getItem("whispers_admin")==="true") isGroupAdmin=true;
-    renderChatList();
-    renderActiveChat();
-    document.getElementById("sendMsgBtn").onclick = () => sendMessageWithAttachments(document.getElementById("messageInput").value, []);
-    document.getElementById("attachBtn").onclick = attachFile;
-    document.getElementById("messageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, []); });
+    renderChatLists();
+    if(isMobile) {
+      document.getElementById("mobileListView").classList.add("list-view");
+      document.getElementById("mobileChatView").classList.remove("active-chat");
+      currentChat = { type: 'group', id: null };
+      renderActiveChatMobile();
+    } else {
+      currentChat = { type: 'group', id: null };
+      renderActiveChatDesktop();
+    }
+    // Set up event listeners
+    document.getElementById("desktopSendBtn").onclick = () => sendMessageWithAttachments(document.getElementById("desktopMessageInput").value, [], false);
+    document.getElementById("desktopAttachBtn").onclick = () => attachFile(false);
+    document.getElementById("desktopMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], false); });
+    document.getElementById("mobileSendBtn").onclick = () => sendMessageWithAttachments(document.getElementById("mobileMessageInput").value, [], true);
+    document.getElementById("mobileAttachBtn").onclick = () => attachFile(true);
+    document.getElementById("mobileMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], true); });
+    document.getElementById("mobileBackBtn").onclick = () => showMobileListView();
+    document.getElementById("desktopNewChatBtn").addEventListener("click", showNewChatModal);
+    document.getElementById("mobileNewChatBtn").addEventListener("click", showNewChatModal);
+  }
+
+  function showMobileChatView() {
+    document.getElementById("mobileListView").style.transform = "translateX(-100%)";
+    document.getElementById("mobileChatView").style.transform = "translateX(0)";
+  }
+  function showMobileListView() {
+    document.getElementById("mobileListView").style.transform = "translateX(0)";
+    document.getElementById("mobileChatView").style.transform = "translateX(100%)";
   }
 
   // ---------- MODALS ----------
@@ -751,12 +1057,12 @@
         if(!privateChats.find(c=>c.userId===m.id)) {
           privateChats.push({ userId:m.id, name:m.name, lastMessage:"", lastTimestamp:"" });
           saveAll();
-          renderChatList();
+          renderChatLists();
         }
         currentChat = { type:'private', id:m.id };
-        renderActiveChat();
-        renderChatList();
-        document.getElementById("newChatModal").style.display = "none";
+        if(isMobile) { showMobileChatView(); renderActiveChatMobile(); } else renderActiveChatDesktop();
+        renderChatLists();
+        document.getElementById("newChatModal")?.remove();
       };
       list.appendChild(btn);
     });
@@ -794,10 +1100,19 @@
   document.getElementById("confirmAddMemberBtn").onclick = addGroupMember;
   document.getElementById("closeAddMemberBtn").onclick = () => document.getElementById("addMemberModal").style.display="none";
   document.getElementById("closeThemeModal").onclick = () => document.getElementById("themeModal").style.display="none";
-  document.getElementById("newChatSidebarBtn").addEventListener("click", showNewChatModal);
   document.getElementById("authModal").addEventListener("click", e=>{ if(e.target===document.getElementById("authModal")) closeAuthModal(); });
   document.getElementById("addMemberModal").addEventListener("click", e=>{ if(e.target===document.getElementById("addMemberModal")) document.getElementById("addMemberModal").style.display="none"; });
   document.getElementById("themeModal").addEventListener("click", e=>{ if(e.target===document.getElementById("themeModal")) document.getElementById("themeModal").style.display="none"; });
+
+  window.addEventListener("resize", () => {
+    isMobile = window.innerWidth <= 768;
+    if(isMobile) {
+      document.getElementById("mobileListView").style.transform = "translateX(0)";
+      document.getElementById("mobileChatView").style.transform = "translateX(100%)";
+    } else {
+      renderActiveChatDesktop();
+    }
+  });
 </script>
 </body>
 </html>
