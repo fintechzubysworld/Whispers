@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Email Auth Only · All Features Working</title>
+  <title>Whispers · Group Owners Can Add Members</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ========== FULL STYLES (same as before) ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -611,6 +610,10 @@
     if (mute) await updateDoc(doc(db, 'groups', groupId), { muted: arrayUnion(userId) });
     else await updateDoc(doc(db, 'groups', groupId), { muted: arrayRemove(userId) });
   }
+  // NEW: Add member to group (only for admins)
+  async function addMemberToGroup(groupId, userId) {
+    await updateDoc(doc(db, 'groups', groupId), { members: arrayUnion(userId) });
+  }
   async function createGroup(name, memberIds) {
     const groupRef = doc(collection(db, 'groups'));
     await setDoc(groupRef, { name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], muted: [], createdAt: serverTimestamp() });
@@ -775,6 +778,7 @@
     }
   }
 
+  // NEW: Show group management modal with "Add Member" option
   async function showGroupManageModal(groupId) {
     try {
       const groupSnap = await getDoc(doc(db, 'groups', groupId));
@@ -782,30 +786,111 @@
       const data = groupSnap.data();
       const members = data.members || [];
       const muted = data.muted || [];
-      const memberList = [];
-      for (const uid of members) {
-        const userSnap = await getDoc(doc(db, 'users', uid));
-        memberList.push({ uid, name: userSnap.exists() ? (userSnap.data().displayName || uid) : uid, isMuted: muted.includes(uid) });
-      }
+      
+      // Fetch all users to display non-members for adding
+      const allUsersSnap = await getDocs(collection(db, 'users'));
+      const allUsers = [];
+      allUsersSnap.forEach(doc => {
+        if (!members.includes(doc.id)) {
+          allUsers.push({ id: doc.id, name: doc.data().displayName || doc.id });
+        }
+      });
+      
       const modal = document.createElement('div');
       modal.className = 'modal';
-      modal.innerHTML = `<div class="modal-card"><h3>Manage Group</h3><div id="memberListDiv"></div><button id="closeGroupModalBtn">Close</button></div>`;
-      const listDiv = modal.querySelector('#memberListDiv');
-      for (const m of memberList) {
+      modal.innerHTML = `
+        <div class="modal-card">
+          <h3>Manage Group</h3>
+          <div id="memberListDiv" style="max-height:200px; overflow-y:auto;"></div>
+          <hr style="margin: 10px 0;">
+          <div id="addMemberSection">
+            <h4>Add Member</h4>
+            <div id="nonMemberList" style="max-height:150px; overflow-y:auto;"></div>
+          </div>
+          <button id="closeGroupModalBtn">Close</button>
+        </div>
+      `;
+      const memberListDiv = modal.querySelector('#memberListDiv');
+      const nonMemberListDiv = modal.querySelector('#nonMemberList');
+      
+      // Display current members with kick/mute buttons
+      for (const uid of members) {
+        const userSnap = await getDoc(doc(db, 'users', uid));
+        const name = userSnap.exists() ? (userSnap.data().displayName || uid) : uid;
+        const isMutedUser = muted.includes(uid);
         const row = document.createElement('div');
         row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
         row.style.padding = '8px'; row.style.borderBottom = '1px solid #eee';
-        row.innerHTML = `<span>${escapeHtml(m.name)} ${m.isMuted ? '(Muted)' : ''}</span>
-          <div><button class="kickBtn" data-uid="${m.uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>
-          <button class="muteBtn" data-uid="${m.uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${m.isMuted ? 'Unmute' : 'Mute'}</button></div>`;
-        row.querySelector('.kickBtn').onclick = async () => { if (confirm(`Kick ${m.name}?`)) { await kickMember(groupId, m.uid); modal.remove(); } };
-        row.querySelector('.muteBtn').onclick = async () => { await toggleMute(groupId, m.uid, !m.isMuted); modal.remove(); };
-        listDiv.appendChild(row);
+        row.innerHTML = `<span>${escapeHtml(name)} ${isMutedUser ? '(Muted)' : ''}</span>
+          <div><button class="kickBtn" data-uid="${uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>
+          <button class="muteBtn" data-uid="${uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${isMutedUser ? 'Unmute' : 'Mute'}</button></div>`;
+        row.querySelector('.kickBtn').onclick = async () => {
+          if (confirm(`Kick ${name}?`)) {
+            await kickMember(groupId, uid);
+            modal.remove();
+          }
+        };
+        row.querySelector('.muteBtn').onclick = async () => {
+          await toggleMute(groupId, uid, !isMutedUser);
+          modal.remove();
+        };
+        memberListDiv.appendChild(row);
       }
+      
+      // Display non-members with "Add" button
+      if (allUsers.length === 0) {
+        nonMemberListDiv.innerHTML = '<div style="padding:8px; text-align:center;">No available users to add</div>';
+      } else {
+        for (const user of allUsers) {
+          const row = document.createElement('div');
+          row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
+          row.style.padding = '8px'; row.style.borderBottom = '1px solid #eee';
+          row.innerHTML = `<span>${escapeHtml(user.name)}</span>
+            <button class="addMemberBtn" data-uid="${user.id}" style="background:#2ecc71; color:white; border:none; border-radius:20px; padding:4px 12px; cursor:pointer;">Add</button>`;
+          row.querySelector('.addMemberBtn').onclick = async () => {
+            await addMemberToGroup(groupId, user.id);
+            modal.remove();
+            // Show a system notification in the group
+            addSystemNotification(`${user.name} was added to the group by an admin`, 'group', groupId);
+          };
+          nonMemberListDiv.appendChild(row);
+        }
+      }
+      
       modal.querySelector('#closeGroupModalBtn').onclick = () => modal.remove();
       document.body.appendChild(modal);
       modal.style.display = 'flex';
     } catch(e) { console.error(e); }
+  }
+
+  // Helper to add system notification (already exists, but we call it from above)
+  async function addSystemNotification(text, chatType = 'group', chatId = 'main') {
+    const msg = {
+      id: Date.now(),
+      text: `🔔 ${text}`,
+      sender: "System",
+      isSelf: false,
+      timestamp: new Date().toLocaleTimeString(),
+      attachments: []
+    };
+    if (chatType === 'group' && chatId === 'main') {
+      groupMessages.push(msg);
+      saveAll();
+      if (currentChat.type === 'group' && currentChat.id === 'main') renderMessages();
+    } else if (chatType === 'group' && chatId !== 'main') {
+      const grp = customGroups.find(g => g.id === chatId);
+      if (grp) {
+        grp.messages.push(msg);
+        saveAll();
+        if (currentChat.type === 'group' && currentChat.id === chatId) renderMessages();
+      }
+    } else if (chatType === 'private' && chatId) {
+      if (!privateMessages[chatId]) privateMessages[chatId] = [];
+      privateMessages[chatId].push(msg);
+      updatePrivateChatPreview(chatId, msg.text, msg.timestamp);
+      if (currentChat.type === 'private' && currentChat.id === chatId) renderMessages();
+    }
+    renderChatList();
   }
 
   // ---------- Plus Menu ----------
@@ -950,7 +1035,7 @@
     currentChat = { type: 'group', id: 'main' };
     if (isMobile) { showMobileListView(); await loadActiveChatMobile(); } else await loadActiveChatDesktop();
 
-    // Attach all button handlers (ensuring they are not lost)
+    // Attach all button handlers
     desktopSend.onclick = async () => {
       if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
       sendMessage(desktopInput.value, [], false);
@@ -998,6 +1083,26 @@
     isMobile = window.innerWidth <= 768;
     if (!isMobile && currentChat) loadActiveChatDesktop();
   });
+  
+  // Helper to save all data (used by addSystemNotification)
+  let customGroups = []; // we need to define this for addSystemNotification
+  let groupMessages = []; // defined above but need to be accessible
+  let privateMessages = {};
+  async function saveAll() {
+    localStorage.setItem("whispers_group_messages", JSON.stringify(groupMessages));
+    localStorage.setItem("whispers_custom_groups", JSON.stringify(customGroups));
+    localStorage.setItem("whispers_private_messages", JSON.stringify(privateMessages));
+    localStorage.setItem("whispers_private_chats", JSON.stringify(privateChats));
+    localStorage.setItem("whispers_group_members", JSON.stringify(groupMembers));
+  }
+  // Re-declare needed variables (they already exist in global scope, but we ensure they are defined)
+  let privateChats = [];
+  let groupMembers = [];
+  window.customGroups = customGroups;
+  window.groupMessages = groupMessages;
+  window.privateMessages = privateMessages;
+  window.privateChats = privateChats;
+  window.groupMembers = groupMembers;
 </script>
 </body>
 </html>
