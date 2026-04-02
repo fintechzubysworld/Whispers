@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Square Logo, No Voice</title>
+  <title>Whispers · Group Admin: Promote/Demote, Delete Group</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -405,6 +405,14 @@
       padding: 8px;
       border-bottom: 1px solid #eee;
     }
+    .admin-badge {
+      background: #4a90e2;
+      color: white;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 11px;
+      margin-left: 8px;
+    }
     @keyframes fadeSlideUp {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -487,7 +495,7 @@
       <input type="email" id="loginUsername" placeholder="Email">
       <input type="password" id="loginPassword" placeholder="Password">
       <button id="doLoginBtn">Login</button>
-      <div style="margin-top: 15px;"><hr><p>Have a google account?</p>
+      <div style="margin-top: 15px;"><hr><p>Federated Login</p>
         <button id="googleLoginBtn" style="background:#db4437;"><i class="fab fa-google"></i> Google</button>
       </div>
     </div>
@@ -505,7 +513,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, query, orderBy, serverTimestamp, setDoc, getDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, query, orderBy, serverTimestamp, setDoc, getDoc, arrayUnion, arrayRemove, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
   const firebaseConfig = {
@@ -626,7 +634,7 @@
     else desktopInput.value = '';
   }
 
-  // ---------- Group Utils ----------
+  // ---------- Group Management Helpers ----------
   async function isMuted(groupId, userId) {
     try {
       const snap = await getDoc(doc(db, 'groups', groupId));
@@ -639,6 +647,17 @@
     else await updateDoc(doc(db, 'groups', groupId), { muted: arrayRemove(userId) });
   }
   async function addMemberToGroup(groupId, userId) { await updateDoc(doc(db, 'groups', groupId), { members: arrayUnion(userId) }); }
+  async function setGroupAdmin(groupId, userId, isAdmin) {
+    if (isAdmin) {
+      await updateDoc(doc(db, 'groups', groupId), { admins: arrayUnion(userId) });
+    } else {
+      await updateDoc(doc(db, 'groups', groupId), { admins: arrayRemove(userId) });
+    }
+  }
+  async function deleteGroup(groupId) {
+    // Delete the group document (subcollections remain but become inaccessible; for simplicity we just delete the doc)
+    await deleteDoc(doc(db, 'groups', groupId));
+  }
   async function createGroup(name, memberIds) {
     const groupRef = doc(collection(db, 'groups'));
     await setDoc(groupRef, { name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], muted: [], createdAt: serverTimestamp() });
@@ -803,35 +822,65 @@
     }
   }
 
+  // Enhanced manage group modal with admin promotion/demotion and delete group
   async function showGroupManageModal(groupId) {
     try {
       const groupSnap = await getDoc(doc(db, 'groups', groupId));
       if (!groupSnap.exists()) return;
       const data = groupSnap.data();
       const members = data.members || [];
+      const admins = data.admins || [];
       const muted = data.muted || [];
       const allUsersSnap = await getDocs(collection(db, 'users'));
       const allUsers = [];
       allUsersSnap.forEach(doc => { if (!members.includes(doc.id)) allUsers.push({ id: doc.id, name: doc.data().displayName || doc.id }); });
+      
       const modal = document.createElement('div');
       modal.className = 'modal';
-      modal.innerHTML = `<div class="modal-card"><h3>Manage Group</h3><div id="memberListDiv" style="max-height:200px; overflow-y:auto;"></div><hr style="margin:10px 0;"><div><h4>Add Member</h4><div id="nonMemberList" style="max-height:150px; overflow-y:auto;"></div></div><button id="closeGroupModalBtn">Close</button></div>`;
+      modal.innerHTML = `
+        <div class="modal-card">
+          <h3>Manage Group</h3>
+          <div id="memberListDiv" style="max-height:200px; overflow-y:auto;"></div>
+          <hr style="margin:10px 0;">
+          <div><h4>Add Member</h4><div id="nonMemberList" style="max-height:150px; overflow-y:auto;"></div></div>
+          <hr style="margin:10px 0;">
+          <div><button id="deleteGroupBtn" style="background:#e74c3c; width:100%;">Delete Group</button></div>
+          <button id="closeGroupModalBtn" style="margin-top:10px;">Close</button>
+        </div>
+      `;
       const memberListDiv = modal.querySelector('#memberListDiv');
       const nonMemberListDiv = modal.querySelector('#nonMemberList');
+      
+      // Current members with admin status, kick/mute, and promote/demote
       for (const uid of members) {
         const userSnap = await getDoc(doc(db, 'users', uid));
         const name = userSnap.exists() ? (userSnap.data().displayName || uid) : uid;
+        const isAdmin = admins.includes(uid);
         const isMutedUser = muted.includes(uid);
         const row = document.createElement('div');
-        row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
+        row.style.display = 'flex'; row.style.flexWrap = 'wrap'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
         row.style.padding = '8px'; row.style.borderBottom = '1px solid #eee';
-        row.innerHTML = `<span>${escapeHtml(name)} ${isMutedUser ? '(Muted)' : ''}</span>
-          <div><button class="kickBtn" data-uid="${uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>
-          <button class="muteBtn" data-uid="${uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${isMutedUser ? 'Unmute' : 'Mute'}</button></div>`;
-        row.querySelector('.kickBtn').onclick = async () => { if (confirm(`Kick ${name}?`)) { await kickMember(groupId, uid); modal.remove(); } };
+        row.innerHTML = `<span>${escapeHtml(name)} ${isAdmin ? '<span class="admin-badge">Admin</span>' : ''}</span>
+          <div>
+            ${uid !== currentUser.uid ? `<button class="kickBtn" data-uid="${uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>` : ''}
+            <button class="muteBtn" data-uid="${uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">${isMutedUser ? 'Unmute' : 'Mute'}</button>
+            ${uid !== currentUser.uid ? `<button class="adminBtn" data-uid="${uid}" style="background:#4a90e2; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${isAdmin ? 'Revoke Admin' : 'Make Admin'}</button>` : ''}
+          </div>`;
+        if (row.querySelector('.kickBtn')) {
+          row.querySelector('.kickBtn').onclick = async () => { if (confirm(`Kick ${name}?`)) { await kickMember(groupId, uid); modal.remove(); } };
+        }
         row.querySelector('.muteBtn').onclick = async () => { await toggleMute(groupId, uid, !isMutedUser); modal.remove(); };
+        if (row.querySelector('.adminBtn')) {
+          row.querySelector('.adminBtn').onclick = async () => {
+            await setGroupAdmin(groupId, uid, !isAdmin);
+            modal.remove();
+            addSystemNotification(`${name} is now ${!isAdmin ? 'an admin' : 'no longer an admin'}`, 'group', groupId);
+          };
+        }
         memberListDiv.appendChild(row);
       }
+      
+      // Add member section
       for (const user of allUsers) {
         const row = document.createElement('div');
         row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
@@ -840,6 +889,26 @@
         row.querySelector('.addMemberBtn').onclick = async () => { await addMemberToGroup(groupId, user.id); modal.remove(); addSystemNotification(`${user.name} was added to the group`, 'group', groupId); };
         nonMemberListDiv.appendChild(row);
       }
+      
+      // Delete group button (only for admins)
+      const isAdminUser = admins.includes(currentUser.uid);
+      const deleteBtn = modal.querySelector('#deleteGroupBtn');
+      if (!isAdminUser) {
+        deleteBtn.style.display = 'none';
+      } else {
+        deleteBtn.onclick = async () => {
+          if (confirm(`⚠️ Are you sure you want to permanently delete this group? This action cannot be undone.`)) {
+            await deleteGroup(groupId);
+            modal.remove();
+            // Redirect to main group or chat list
+            currentChat = { type: 'group', id: 'main' };
+            if (isMobile) { showMobileListView(); await loadActiveChatMobile(); } else await loadActiveChatDesktop();
+            renderChatList();
+            addSystemNotification(`Group "${data.name}" has been deleted.`, 'group', 'main');
+          }
+        };
+      }
+      
       modal.querySelector('#closeGroupModalBtn').onclick = () => modal.remove();
       document.body.appendChild(modal);
       modal.style.display = 'flex';
@@ -993,7 +1062,7 @@
     input.click();
   }
 
-  // ---------- Data Persistence Helpers ----------
+  // ---------- Data Persistence Helpers (for local fallback, but Firestore is primary) ----------
   let groupMessages = [];
   let customGroups = [];
   let privateMessages = {};
@@ -1006,7 +1075,7 @@
     localStorage.setItem("whispers_private_chats", JSON.stringify(privateChats));
     localStorage.setItem("whispers_group_members", JSON.stringify(groupMembers));
   }
-  function updatePrivateChatPreview(userId, lastMsg, timestamp) { /* stub, will be replaced later */ }
+  function updatePrivateChatPreview(userId, lastMsg, timestamp) { /* stub, not needed with Firestore */ }
 
   // ---------- Auth & Init ----------
   async function startApp(user) {
@@ -1015,7 +1084,7 @@
     startHeartbeat();
     const mainGroup = doc(db, 'groups', 'main');
     const mainSnap = await getDoc(mainGroup);
-    if (!mainSnap.exists()) await setDoc(mainGroup, { name: 'Whispers Squad', members: [user.uid], muted: [], createdAt: serverTimestamp() });
+    if (!mainSnap.exists()) await setDoc(mainGroup, { name: 'Whispers Squad', members: [user.uid], admins: [user.uid], muted: [], createdAt: serverTimestamp() });
     else if (!mainSnap.data().members.includes(user.uid)) await updateDoc(mainGroup, { members: arrayUnion(user.uid) });
     await renderChatList();
     currentChat = { type: 'group', id: 'main' };
