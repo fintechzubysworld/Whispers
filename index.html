@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Whispers · Sky Blue Theme</title>
+  <title>Whispers · Fixed Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -19,7 +19,6 @@
       transition: background 0.2s;
     }
     :root {
-      /* Sky Blue default values (will be applied by JS on load) */
       --app-bg: #e8f4fd;
       --sidebar-bg: #ffffff;
       --sidebar-hover: #e3f0fa;
@@ -55,10 +54,8 @@
       border-radius: 32px;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
       overflow: hidden;
-      transition: background 0.2s;
       position: relative;
     }
-    /* Desktop Layout */
     .desktop-layout {
       display: flex;
       height: 100%;
@@ -70,7 +67,6 @@
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
       position: relative;
     }
     .sidebar-header {
@@ -81,13 +77,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .sidebar-header h2 {
-      font-size: 20px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .sidebar-header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
     .logout-icon {
       background: rgba(255,255,255,0.2);
       border: none;
@@ -96,12 +86,6 @@
       height: 34px;
       border-radius: 40px;
       cursor: pointer;
-      font-size: 16px;
-      transition: 0.2s;
-    }
-    .logout-icon:hover {
-      background: rgba(255,255,255,0.35);
-      transform: scale(0.96);
     }
     .chat-list {
       flex: 1;
@@ -114,7 +98,6 @@
       gap: 12px;
       padding: 12px 16px;
       cursor: pointer;
-      transition: background 0.1s;
       border-left: 3px solid transparent;
     }
     .chat-list-item:hover { background: var(--sidebar-hover); }
@@ -132,18 +115,10 @@
       justify-content: center;
       color: white;
       font-size: 20px;
-      flex-shrink: 0;
     }
     .chat-info { flex: 1; min-width: 0; }
     .chat-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-preview {
-      font-size: 12px;
-      color: var(--time-color);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 2px;
-    }
+    .chat-preview { font-size: 12px; color: var(--time-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
     .fab-plus {
       position: absolute;
       bottom: 20px;
@@ -160,12 +135,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: 0.2s;
       z-index: 10;
-    }
-    .fab-plus:hover {
-      background: var(--send-btn-hover);
-      transform: scale(1.05);
     }
     .plus-menu {
       position: absolute;
@@ -186,12 +156,9 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      transition: background 0.1s;
       color: var(--received-bubble-text);
     }
-    .plus-menu-item:hover {
-      background: var(--sidebar-hover);
-    }
+    .plus-menu-item:hover { background: var(--sidebar-hover); }
     .main-chat {
       flex: 1;
       display: flex;
@@ -208,13 +175,7 @@
       justify-content: space-between;
       color: var(--header-text);
     }
-    .chat-title {
-      font-size: 18px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .chat-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
     .chat-subtitle { font-size: 12px; opacity: 0.9; }
     .admin-controls { display: flex; gap: 8px; }
     .btn-icon {
@@ -241,7 +202,6 @@
       max-width: 78%;
       padding: 10px 14px;
       border-radius: 22px;
-      position: relative;
       box-shadow: 0 1px 1px rgba(0,0,0,0.05);
     }
     .sent .message-bubble {
@@ -275,17 +235,8 @@
       align-items: center;
       gap: 8px;
     }
-    .attachment img, .attachment video, .attachment audio {
-      max-width: 100%;
-      max-height: 200px;
-      border-radius: 8px;
-    }
-    .message-time {
-      font-size: 10px;
-      color: var(--time-color);
-      margin-top: 5px;
-      text-align: right;
-    }
+    .attachment img, .attachment video, .attachment audio { max-width: 100%; max-height: 200px; border-radius: 8px; }
+    .message-time { font-size: 10px; color: var(--time-color); margin-top: 5px; text-align: right; }
     .input-area {
       background: var(--input-area-bg);
       padding: 12px 16px;
@@ -319,7 +270,6 @@
       width: auto;
       padding: 0 12px;
     }
-    /* Mobile Layout */
     .mobile-layout {
       display: none;
       height: 100%;
@@ -347,7 +297,6 @@
       justify-content: space-between;
       color: white;
     }
-    .mobile-header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
     .mobile-back-btn {
       background: transparent;
       border: none;
@@ -355,11 +304,7 @@
       font-size: 20px;
       cursor: pointer;
     }
-    .mobile-chat-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 0 80px 0;
-    }
+    .mobile-chat-list { flex: 1; overflow-y: auto; padding: 8px 0 80px 0; }
     .mobile-fab {
       position: absolute;
       bottom: 20px;
@@ -402,14 +347,14 @@
       overflow-y: auto;
     }
     .modal-card h3 { margin-bottom: 12px; }
-    .modal-card input, .modal-card select, .modal-card textarea {
+    .modal-card input, .modal-card textarea {
       width: 100%;
       margin: 8px 0;
       padding: 8px 12px;
       border-radius: 20px;
       border: 1px solid #ccc;
     }
-    .modal-card textarea { min-height: 100px; resize: vertical; }
+    .modal-card textarea { min-height: 100px; }
     .modal-card button {
       background: #4a90e2;
       color: white;
@@ -426,6 +371,7 @@
       padding: 8px;
       border-bottom: 1px solid #eee;
     }
+    .admin-badge { font-size: 11px; background: #4a90e2; color: white; border-radius: 20px; padding: 2px 8px; margin-left: 8px; }
     @keyframes fadeSlideUp {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -448,7 +394,7 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
-        <button id="desktopLogoutBtn" class="logout-icon" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        <button id="desktopLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="chat-list" id="desktopChatList"></div>
       <button id="desktopFabPlus" class="fab-plus"><i class="fas fa-plus"></i></button>
@@ -533,28 +479,60 @@
 <div id="createFileModal" class="modal">
   <div class="modal-card">
     <h3>Create New Text File</h3>
-    <input type="text" id="fileNameInput" placeholder="File name (e.g., note.txt)" value="document.txt">
-    <textarea id="fileContentInput" placeholder="Enter file content here..."></textarea>
+    <input type="text" id="fileNameInput" placeholder="File name" value="document.txt">
+    <textarea id="fileContentInput" placeholder="Enter file content..."></textarea>
     <button id="confirmCreateFile">Create & Attach</button>
     <button id="cancelFileModal">Cancel</button>
   </div>
 </div>
 
-<!-- Admin & Member Modals -->
-<div id="addMemberModal" class="modal"><div class="modal-card"><h3>Add Group Member</h3><input type="text" id="newMemberName"><button id="confirmAddMemberBtn">Add</button><button id="closeAddMemberBtn">Cancel</button></div></div>
-<div id="themeModal" class="modal"><div class="modal-card"><h3>Themes</h3><div id="themeListContainer"></div><button id="closeThemeModal">Close</button></div></div>
+<!-- Manage Group Modal -->
+<div id="manageGroupModal" class="modal">
+  <div class="modal-card">
+    <h3>Manage Group</h3>
+    <div id="groupMembersList" style="max-height:300px; overflow-y:auto; text-align:left; margin:10px 0;"></div>
+    <button id="closeManageModal">Close</button>
+  </div>
+</div>
+
+<!-- Rename Group Modal -->
+<div id="renameGroupModal" class="modal">
+  <div class="modal-card">
+    <h3>Rename Group</h3>
+    <input type="text" id="renameGroupInput" placeholder="New group name">
+    <button id="confirmRenameBtn">Rename</button>
+    <button id="cancelRenameBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Theme Modal -->
+<div id="themeModal" class="modal">
+  <div class="modal-card">
+    <h3>Themes</h3>
+    <div id="themeListContainer"></div>
+    <button id="closeThemeModal">Close</button>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div id="addMemberModal" class="modal">
+  <div class="modal-card">
+    <h3>Add Group Member</h3>
+    <input type="text" id="newMemberName" placeholder="Member Name">
+    <button id="confirmAddMemberBtn">Add</button>
+    <button id="closeAddMemberBtn">Cancel</button>
+  </div>
+</div>
 
 <script>
-  // ---------- DATA MODELS ----------
+  // ---------- DATA ----------
   let currentUser = null;
-  let groupMessages = [];
-  let customGroups = [];
+  let groupMessages = [];           // main group
+  let customGroups = [];            // { id, name, members: [userIds], messages, admins: [userIds] }
   let privateMessages = {};
   let privateChats = [];
-  let groupMembers = [];
+  let groupMembers = [];            // all possible members for selection
   let currentChat = { type: 'group', id: 'main' };
-  let isGroupAdmin = false;
-  let currentThemeId = "skyblue";
   let isMobile = window.innerWidth <= 768;
 
   const DEFAULT_MEMBERS = [
@@ -564,111 +542,79 @@
     { id: "riley", name: "Riley" }
   ];
 
-  // ---------- THEME SYSTEM (Sky Blue as default) ----------
+  // Helper: check if current user is admin of given group
+  function isUserAdminOfGroup(groupId) {
+    if (!currentUser) return false;
+    if (groupId === 'main') {
+      let admins = JSON.parse(localStorage.getItem("whispers_main_group_admins") || "[]");
+      return admins.includes(currentUser.username);
+    } else {
+      let grp = customGroups.find(g => g.id === groupId);
+      return grp && grp.admins && grp.admins.includes(currentUser.username);
+    }
+  }
+
+  // Initialize main group admin (first user becomes admin)
+  function initMainGroupAdmin() {
+    let admins = JSON.parse(localStorage.getItem("whispers_main_group_admins") || "[]");
+    if (admins.length === 0 && currentUser) {
+      admins.push(currentUser.username);
+      localStorage.setItem("whispers_main_group_admins", JSON.stringify(admins));
+      return true;
+    }
+    return false;
+  }
+
+  function setGroupAdmin(groupId, userId, isAdmin) {
+    if (groupId === 'main') {
+      let admins = JSON.parse(localStorage.getItem("whispers_main_group_admins") || "[]");
+      if (isAdmin && !admins.includes(userId)) admins.push(userId);
+      else if (!isAdmin && admins.includes(userId)) admins = admins.filter(id => id !== userId);
+      localStorage.setItem("whispers_main_group_admins", JSON.stringify(admins));
+    } else {
+      let grp = customGroups.find(g => g.id === groupId);
+      if (grp) {
+        if (isAdmin && !grp.admins.includes(userId)) grp.admins.push(userId);
+        else if (!isAdmin && grp.admins.includes(userId)) grp.admins = grp.admins.filter(id => id !== userId);
+        saveAll();
+      }
+    }
+    renderChatLists();
+    if ((groupId === 'main' && currentChat.id === 'main') || (groupId !== 'main' && currentChat.id === groupId)) {
+      if (!isMobile) renderDesktopHeader(); else renderMobileHeader();
+    }
+  }
+
+  // ---------- THEMES ----------
   const builtinThemes = {
-    skyblue: { name: "☁️ Sky Blue", vars: {
-        '--app-bg': '#e8f4fd',
-        '--sidebar-bg': '#ffffff',
-        '--sidebar-hover': '#e3f0fa',
-        '--sidebar-active': '#d4e8f5',
-        '--header-gradient-start': '#4a90e2',
-        '--header-gradient-end': '#2c6eb3',
-        '--chat-bg': '#e8f4fd',
-        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(74,144,226,0.08) 2%, transparent 2.5%)',
-        '--sent-bubble': '#cce4f7',
-        '--sent-bubble-text': '#1a3c5e',
-        '--received-bubble': 'white',
-        '--received-bubble-text': '#1a2a3a',
-        '--sender-name-color': '#4a90e2',
-        '--received-sender-color': '#2c6eb3',
-        '--input-area-bg': '#ffffff',
-        '--input-bg': '#f0f8ff',
-        '--input-border-focus': '#4a90e2',
-        '--send-btn-bg': '#4a90e2',
-        '--send-btn-hover': '#2c6eb3',
-        '--simulate-btn-bg': '#e0ecf5',
-        '--simulate-btn-text': '#2c6eb3',
-        '--time-color': '#6b7b8c',
-        '--border-color': '#cde0ec'
-      } },
-    light: { name: "☀️ Light", vars: {
-        '--app-bg': '#f0f2f5',
-        '--sidebar-bg': '#ffffff',
-        '--sidebar-hover': '#f0f2f5',
-        '--sidebar-active': '#e7f3ff',
-        '--header-gradient-start': '#075e54',
-        '--header-gradient-end': '#128c7e',
-        '--chat-bg': '#f0f2f5',
-        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(220,240,245,0.3) 2%, transparent 2.5%)',
-        '--sent-bubble': '#dcf8c5',
-        '--sent-bubble-text': '#111',
-        '--received-bubble': 'white',
-        '--received-bubble-text': '#1f2c3e',
-        '--sender-name-color': '#075e54',
-        '--received-sender-color': '#128c7e',
-        '--input-area-bg': '#ffffff',
-        '--input-bg': '#f3f5f7',
-        '--input-border-focus': '#25d36650',
-        '--send-btn-bg': '#075e54',
-        '--send-btn-hover': '#128c7e',
-        '--simulate-btn-bg': '#e4e6eb',
-        '--simulate-btn-text': '#1b2a3f',
-        '--time-color': '#6b6f76',
-        '--border-color': '#e9ecef'
-      } },
-    dark: { name: "🌙 Dark", vars: {
-        '--app-bg': '#1e1e2f',
-        '--sidebar-bg': '#2a2a3a',
-        '--sidebar-hover': '#35354a',
-        '--sidebar-active': '#2d3b66',
-        '--header-gradient-start': '#0a2f2a',
-        '--header-gradient-end': '#1f4e46',
-        '--chat-bg': '#1a1a2a',
-        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(90,120,120,0.1) 2%, transparent 2.5%)',
-        '--sent-bubble': '#2a5e5a',
-        '--sent-bubble-text': '#f0f0f0',
-        '--received-bubble': '#2d2d3a',
-        '--received-bubble-text': '#e0e0e0',
-        '--sender-name-color': '#6fbfb0',
-        '--received-sender-color': '#68b8a8',
-        '--input-area-bg': '#232332',
-        '--input-bg': '#2e2e42',
-        '--input-border-focus': '#2ecc71',
-        '--send-btn-bg': '#1f8a7a',
-        '--send-btn-hover': '#2aa090',
-        '--simulate-btn-bg': '#35354a',
-        '--simulate-btn-text': '#e2e2e2',
-        '--time-color': '#a0a0b0',
-        '--border-color': '#35354a'
-      } }
+    skyblue: { name: "☁️ Sky Blue", vars: { '--app-bg': '#e8f4fd', '--sidebar-bg': '#ffffff', '--sidebar-hover': '#e3f0fa', '--sidebar-active': '#d4e8f5', '--header-gradient-start': '#4a90e2', '--header-gradient-end': '#2c6eb3', '--chat-bg': '#e8f4fd', '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(74,144,226,0.08) 2%, transparent 2.5%)', '--sent-bubble': '#cce4f7', '--sent-bubble-text': '#1a3c5e', '--received-bubble': 'white', '--received-bubble-text': '#1a2a3a', '--sender-name-color': '#4a90e2', '--received-sender-color': '#2c6eb3', '--input-area-bg': '#ffffff', '--input-bg': '#f0f8ff', '--input-border-focus': '#4a90e2', '--send-btn-bg': '#4a90e2', '--send-btn-hover': '#2c6eb3', '--simulate-btn-bg': '#e0ecf5', '--simulate-btn-text': '#2c6eb3', '--time-color': '#6b7b8c', '--border-color': '#cde0ec' } },
+    light: { name: "☀️ Light", vars: { '--app-bg': '#f0f2f5', '--sidebar-bg': '#ffffff', '--sidebar-hover': '#f0f2f5', '--sidebar-active': '#e7f3ff', '--header-gradient-start': '#075e54', '--header-gradient-end': '#128c7e', '--chat-bg': '#f0f2f5', '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(220,240,245,0.3) 2%, transparent 2.5%)', '--sent-bubble': '#dcf8c5', '--sent-bubble-text': '#111', '--received-bubble': 'white', '--received-bubble-text': '#1f2c3e', '--sender-name-color': '#075e54', '--received-sender-color': '#128c7e', '--input-area-bg': '#ffffff', '--input-bg': '#f3f5f7', '--input-border-focus': '#25d36650', '--send-btn-bg': '#075e54', '--send-btn-hover': '#128c7e', '--simulate-btn-bg': '#e4e6eb', '--simulate-btn-text': '#1b2a3f', '--time-color': '#6b6f76', '--border-color': '#e9ecef' } },
+    dark: { name: "🌙 Dark", vars: { '--app-bg': '#1e1e2f', '--sidebar-bg': '#2a2a3a', '--sidebar-hover': '#35354a', '--sidebar-active': '#2d3b66', '--header-gradient-start': '#0a2f2a', '--header-gradient-end': '#1f4e46', '--chat-bg': '#1a1a2a', '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(90,120,120,0.1) 2%, transparent 2.5%)', '--sent-bubble': '#2a5e5a', '--sent-bubble-text': '#f0f0f0', '--received-bubble': '#2d2d3a', '--received-bubble-text': '#e0e0e0', '--sender-name-color': '#6fbfb0', '--received-sender-color': '#68b8a8', '--input-area-bg': '#232332', '--input-bg': '#2e2e42', '--input-border-focus': '#2ecc71', '--send-btn-bg': '#1f8a7a', '--send-btn-hover': '#2aa090', '--simulate-btn-bg': '#35354a', '--simulate-btn-text': '#e2e2e2', '--time-color': '#a0a0b0', '--border-color': '#35354a' } }
   };
   let customThemes = [];
   function applyThemeById(id) {
-    let vars = null;
-    if (builtinThemes[id]) vars = builtinThemes[id].vars;
-    else vars = customThemes.find(t=>t.id===id)?.vars;
-    if(vars) for(let [prop,val] of Object.entries(vars)) document.documentElement.style.setProperty(prop, val);
-    currentThemeId = id;
+    let vars = builtinThemes[id]?.vars || customThemes.find(t=>t.id===id)?.vars;
+    if (vars) for (let [p, v] of Object.entries(vars)) document.documentElement.style.setProperty(p, v);
     localStorage.setItem("whispers_theme", id);
   }
   function loadTheme() {
     let saved = localStorage.getItem("whispers_theme");
-    if(saved && (builtinThemes[saved]||customThemes.some(t=>t.id===saved))) applyThemeById(saved);
-    else applyThemeById("skyblue"); // default to skyblue
+    if (saved && (builtinThemes[saved] || customThemes.some(t=>t.id===saved))) applyThemeById(saved);
+    else applyThemeById("skyblue");
   }
 
   // ---------- DATA PERSISTENCE ----------
   function loadData() {
-    const storedGroup = localStorage.getItem("whispers_group_messages");
-    groupMessages = storedGroup ? JSON.parse(storedGroup) : [
+    groupMessages = JSON.parse(localStorage.getItem("whispers_group_messages") || JSON.stringify([
       { id: Date.now()+1, text: "Welcome to Whispers! 🎉", sender: "Emma", isSelf: false, timestamp: new Date().toLocaleTimeString(), attachments: [] },
       { id: Date.now()+2, text: "Use the + button to create private chats, new groups, or text files.", sender: "System", isSelf: false, timestamp: new Date().toLocaleTimeString(), attachments: [] }
-    ];
+    ]));
     customGroups = JSON.parse(localStorage.getItem("whispers_custom_groups") || "[]");
+    customGroups = customGroups.map(g => ({ ...g, admins: g.admins || [g.createdBy].filter(Boolean), members: g.members || [] }));
     privateMessages = JSON.parse(localStorage.getItem("whispers_private_messages") || "{}");
     privateChats = JSON.parse(localStorage.getItem("whispers_private_chats") || "[]");
     groupMembers = JSON.parse(localStorage.getItem("whispers_group_members") || JSON.stringify(DEFAULT_MEMBERS));
-    if(!localStorage.getItem("whispers_groupName")) localStorage.setItem("whispers_groupName", "Whispers Squad");
+    if (!localStorage.getItem("whispers_groupName")) localStorage.setItem("whispers_groupName", "Whispers Squad");
     saveAll();
   }
   function saveAll() {
@@ -680,58 +626,60 @@
   }
 
   function updatePrivateChatPreview(userId, lastMsg, timestamp) {
-    let chat = privateChats.find(c=>c.userId===userId);
-    if(chat) { chat.lastMessage = lastMsg; chat.lastTimestamp = timestamp; }
+    let chat = privateChats.find(c => c.userId === userId);
+    if (chat) { chat.lastMessage = lastMsg; chat.lastTimestamp = timestamp; }
     else {
-      let name = groupMembers.find(m=>m.id===userId)?.name || userId;
+      let name = groupMembers.find(m => m.id === userId)?.name || userId;
       privateChats.push({ userId, name, lastMessage: lastMsg, lastTimestamp: timestamp });
     }
     saveAll();
     renderChatLists();
   }
 
-  function addSystemNotification(text, chatType='group', chatId='main') {
+  function addSystemNotification(text, chatType = 'group', chatId = 'main') {
     let msg = { id: Date.now(), text: `🔔 ${text}`, sender: "System", isSelf: false, timestamp: new Date().toLocaleTimeString(), attachments: [] };
-    if(chatType==='group' && chatId==='main') { groupMessages.push(msg); saveAll(); if(currentChat.type==='group' && currentChat.id==='main') renderMessages(); }
-    else if(chatType==='group' && chatId!=='main') {
-      let grp = customGroups.find(g=>g.id===chatId);
-      if(grp) { grp.messages.push(msg); saveAll(); if(currentChat.type==='group' && currentChat.id===chatId) renderMessages(); }
+    if (chatType === 'group' && chatId === 'main') { groupMessages.push(msg); saveAll(); if (currentChat.type === 'group' && currentChat.id === 'main') renderMessages(); }
+    else if (chatType === 'group' && chatId !== 'main') {
+      let grp = customGroups.find(g => g.id === chatId);
+      if (grp) { grp.messages.push(msg); saveAll(); if (currentChat.type === 'group' && currentChat.id === chatId) renderMessages(); }
     }
-    else if(chatType==='private' && chatId) {
-      if(!privateMessages[chatId]) privateMessages[chatId]=[];
+    else if (chatType === 'private' && chatId) {
+      if (!privateMessages[chatId]) privateMessages[chatId] = [];
       privateMessages[chatId].push(msg);
       updatePrivateChatPreview(chatId, msg.text, msg.timestamp);
-      if(currentChat.type==='private' && currentChat.id===chatId) renderMessages();
+      if (currentChat.type === 'private' && currentChat.id === chatId) renderMessages();
     }
     renderChatLists();
   }
 
-  // ---------- RENDERING CHAT LIST ----------
+  // ---------- RENDERING ----------
   function renderChatLists() {
     const desktopContainer = document.getElementById("desktopChatList");
     const mobileContainer = document.getElementById("mobileChatList");
     const renderTo = (container, isDesktop) => {
-      if(!container) return;
+      if (!container) return;
       container.innerHTML = "";
-      let mainItem = createChatListItem('group', 'main', localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
-      mainItem.addEventListener("click",()=>{ currentChat={type:'group', id:'main'}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
+      // Main group
+      let mainItem = createChatItem('group', 'main', localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
+      mainItem.addEventListener("click", () => { currentChat = { type: 'group', id: 'main' }; if (isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
       container.appendChild(mainItem);
-      customGroups.forEach(grp=>{
+      // Custom groups
+      customGroups.forEach(grp => {
         let lastMsg = grp.messages.length ? grp.messages[grp.messages.length-1].text : "No messages";
-        let item = createChatListItem('group', grp.id, grp.name, lastMsg);
-        item.addEventListener("click",()=>{ currentChat={type:'group', id:grp.id}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
+        let item = createChatItem('group', grp.id, grp.name, lastMsg);
+        item.addEventListener("click", () => { currentChat = { type: 'group', id: grp.id }; if (isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
         container.appendChild(item);
       });
-      privateChats.sort((a,b)=>(b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
-      privateChats.forEach(chat=>{
-        let item = createChatListItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
-        item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
+      // Private chats
+      privateChats.sort((a,b) => (b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
+      privateChats.forEach(chat => {
+        let item = createChatItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
+        item.addEventListener("click", () => { currentChat = { type: 'private', id: chat.userId }; if (isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
         container.appendChild(item);
       });
+      // Highlight active
       container.querySelectorAll(".chat-list-item").forEach(el => {
-        let type = el.dataset.type;
-        let id = el.dataset.id;
-        if (type === currentChat.type && id === (currentChat.id || null)) el.classList.add("active");
+        if (el.dataset.type === currentChat.type && el.dataset.id === (currentChat.id || null)) el.classList.add("active");
         else el.classList.remove("active");
       });
     };
@@ -739,40 +687,39 @@
     renderTo(mobileContainer, false);
   }
 
-  function createChatListItem(type, id, name, preview) {
+  function createChatItem(type, id, name, preview) {
     let div = document.createElement("div");
     div.className = "chat-list-item";
     div.dataset.type = type;
     div.dataset.id = id;
-    let icon = (type==='group') ? 'fas fa-users' : 'fas fa-user';
-    div.innerHTML = `
-      <div class="chat-avatar"><i class="${icon}"></i></div>
-      <div class="chat-info">
-        <div class="chat-name">${escapeHtml(name)}</div>
-        <div class="chat-preview">${escapeHtml(preview.substring(0, 40))}</div>
-      </div>
-    `;
+    let icon = type === 'group' ? 'fas fa-users' : 'fas fa-user';
+    div.innerHTML = `<div class="chat-avatar"><i class="${icon}"></i></div>
+      <div class="chat-info"><div class="chat-name">${escapeHtml(name)}</div>
+      <div class="chat-preview">${escapeHtml(preview.substring(0,40))}</div></div>`;
     return div;
   }
 
   function getCurrentMessages() {
-    if(currentChat.type==='group') {
-      if(currentChat.id==='main') return groupMessages;
-      let grp = customGroups.find(g=>g.id===currentChat.id);
+    if (currentChat.type === 'group') {
+      if (currentChat.id === 'main') return groupMessages;
+      let grp = customGroups.find(g => g.id === currentChat.id);
       return grp ? grp.messages : [];
     } else {
       return privateMessages[currentChat.id] || [];
     }
   }
 
-  function renderMessagesCommon(container, messages) {
+  function renderMessages() {
+    let container = isMobile ? document.getElementById("mobileChatMessages") : document.getElementById("desktopChatMessages");
+    if (!container) return;
+    let messages = getCurrentMessages();
     container.innerHTML = "";
     messages.forEach(msg => {
       let row = document.createElement("div");
       row.className = `message-row ${msg.isSelf ? 'sent' : 'received'}`;
       let bubble = document.createElement("div"); bubble.className = "message-bubble";
       let senderSpan = document.createElement("div"); senderSpan.className = "sender-name";
-      if(!msg.isSelf) senderSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.sender)}`;
+      if (!msg.isSelf) senderSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.sender)}`;
       else senderSpan.innerHTML = `<i class="fas fa-check-double"></i> You`;
       let textSpan = document.createElement("div"); textSpan.className = "message-text";
       let text = escapeHtml(msg.text);
@@ -780,13 +727,13 @@
       textSpan.innerHTML = text;
       bubble.appendChild(senderSpan);
       bubble.appendChild(textSpan);
-      if(msg.attachments && msg.attachments.length) {
+      if (msg.attachments && msg.attachments.length) {
         msg.attachments.forEach(att => {
           let attDiv = document.createElement("div"); attDiv.className = "attachment";
-          if(att.type === 'image') attDiv.innerHTML = `<img src="${att.data}" style="max-width:100%; max-height:200px; border-radius:8px;">`;
-          else if(att.type === 'video') attDiv.innerHTML = `<video controls src="${att.data}" style="max-width:100%; max-height:200px;"></video>`;
-          else if(att.type === 'audio') attDiv.innerHTML = `<audio controls src="${att.data}"></audio>`;
-          else if(att.type === 'document') attDiv.innerHTML = `<i class="fas fa-file-alt file-icon"></i> <a href="${att.data}" download="${att.name}">${att.name}</a>`;
+          if (att.type === 'image') attDiv.innerHTML = `<img src="${att.data}" style="max-width:100%; max-height:200px; border-radius:8px;">`;
+          else if (att.type === 'video') attDiv.innerHTML = `<video controls src="${att.data}" style="max-width:100%; max-height:200px;"></video>`;
+          else if (att.type === 'audio') attDiv.innerHTML = `<audio controls src="${att.data}"></audio>`;
+          else if (att.type === 'document') attDiv.innerHTML = `<i class="fas fa-file-alt file-icon"></i> <a href="${att.data}" download="${att.name}">${att.name}</a>`;
           bubble.appendChild(attDiv);
         });
       }
@@ -798,40 +745,34 @@
     container.scrollTop = container.scrollHeight;
   }
 
-  function renderDesktopMessages() { renderMessagesCommon(document.getElementById("desktopChatMessages"), getCurrentMessages()); }
-  function renderMobileMessages() { renderMessagesCommon(document.getElementById("mobileChatMessages"), getCurrentMessages()); }
-
   function renderDesktopHeader() {
     let header = document.getElementById("desktopChatHeader");
-    let title="", subtitle="";
-    if(currentChat.type==='group') {
-      if(currentChat.id==='main') title = localStorage.getItem("whispers_groupName");
-      else { let grp = customGroups.find(g=>g.id===currentChat.id); title = grp ? grp.name : "Group"; }
-      subtitle = "Group Chat";
+    let title = "", isAdmin = false;
+    if (currentChat.type === 'group') {
+      title = currentChat.id === 'main' ? localStorage.getItem("whispers_groupName") : (customGroups.find(g=>g.id===currentChat.id)?.name || "Group");
+      isAdmin = isUserAdminOfGroup(currentChat.id);
     } else {
-      let chat = privateChats.find(c=>c.userId===currentChat.id);
-      title = chat ? chat.name : currentChat.id;
-      subtitle = "Private chat";
+      title = privateChats.find(c=>c.userId===currentChat.id)?.name || currentChat.id;
     }
     header.innerHTML = `
       <div class="chat-title">
-        <i class="${currentChat.type==='group' ? 'fas fa-users' : 'fas fa-user'}"></i>
+        <i class="${currentChat.type === 'group' ? 'fas fa-users' : 'fas fa-user'}"></i>
         ${escapeHtml(title)}
-        <span class="chat-subtitle">${subtitle}</span>
+        <span class="chat-subtitle">${currentChat.type === 'group' ? 'Group Chat' : 'Private Chat'}</span>
       </div>
       <div class="admin-controls">
-        ${(currentChat.type==='group' && currentChat.id==='main') ? `
-          <button class="btn-icon" id="desktopAddMemberBtn" title="Add Member"><i class="fas fa-user-plus"></i></button>
-          <button class="btn-icon" id="desktopAdminLoginBtn"><i class="fas fa-user-shield"></i></button>
-          <button class="btn-icon" id="desktopAdminLogoutBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-sign-out-alt"></i></button>
-          <button class="btn-icon" id="desktopThemeBtn" style="display:${isGroupAdmin?'flex':'none'}"><i class="fas fa-palette"></i></button>
+        ${(currentChat.type === 'group' && isAdmin) ? `
+          <button class="btn-icon" id="desktopAddMemberBtn"><i class="fas fa-user-plus"></i></button>
+          <button class="btn-icon" id="desktopRenameGroupBtn"><i class="fas fa-edit"></i></button>
+          <button class="btn-icon" id="desktopManageGroupBtn"><i class="fas fa-cog"></i></button>
+          <button class="btn-icon" id="desktopThemeBtn"><i class="fas fa-palette"></i></button>
         ` : ''}
       </div>
     `;
-    if(currentChat.type==='group' && currentChat.id==='main') {
+    if (currentChat.type === 'group' && isAdmin) {
       document.getElementById("desktopAddMemberBtn")?.addEventListener("click", showAddMemberModal);
-      document.getElementById("desktopAdminLoginBtn")?.addEventListener("click", showAdminLogin);
-      document.getElementById("desktopAdminLogoutBtn")?.addEventListener("click", adminLogout);
+      document.getElementById("desktopRenameGroupBtn")?.addEventListener("click", () => showRenameGroupModal(currentChat.id));
+      document.getElementById("desktopManageGroupBtn")?.addEventListener("click", () => showManageGroupModal(currentChat.id));
       document.getElementById("desktopThemeBtn")?.addEventListener("click", openThemeModal);
     }
   }
@@ -839,39 +780,36 @@
   function renderMobileHeader() {
     let titleDiv = document.getElementById("mobileChatTitle");
     let adminControls = document.getElementById("mobileAdminControls");
-    let title="", subtitle="";
-    if(currentChat.type==='group') {
-      if(currentChat.id==='main') title = localStorage.getItem("whispers_groupName");
-      else { let grp = customGroups.find(g=>g.id===currentChat.id); title = grp ? grp.name : "Group"; }
-      subtitle = "Group Chat";
+    let title = "", isAdmin = false;
+    if (currentChat.type === 'group') {
+      title = currentChat.id === 'main' ? localStorage.getItem("whispers_groupName") : (customGroups.find(g=>g.id===currentChat.id)?.name || "Group");
+      isAdmin = isUserAdminOfGroup(currentChat.id);
     } else {
-      let chat = privateChats.find(c=>c.userId===currentChat.id);
-      title = chat ? chat.name : currentChat.id;
-      subtitle = "Private chat";
+      title = privateChats.find(c=>c.userId===currentChat.id)?.name || currentChat.id;
     }
-    titleDiv.innerHTML = `<div><div class="chat-title" style="font-size:16px;">${escapeHtml(title)}</div><div class="chat-subtitle" style="font-size:10px;">${subtitle}</div></div>`;
-    adminControls.innerHTML = (currentChat.type==='group' && currentChat.id==='main') ? `
+    titleDiv.innerHTML = `<div><div class="chat-title" style="font-size:16px;">${escapeHtml(title)}</div><div class="chat-subtitle" style="font-size:10px;">${currentChat.type === 'group' ? 'Group Chat' : 'Private Chat'}</div></div>`;
+    adminControls.innerHTML = (currentChat.type === 'group' && isAdmin) ? `
       <button class="btn-icon" id="mobileAddMemberBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-user-plus"></i></button>
-      <button class="btn-icon" id="mobileAdminLoginBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-user-shield"></i></button>
-      <button class="btn-icon" id="mobileAdminLogoutBtn" style="display:${isGroupAdmin?'flex':'none'}; background:rgba(255,255,255,0.2);"><i class="fas fa-sign-out-alt"></i></button>
-      <button class="btn-icon" id="mobileThemeBtn" style="display:${isGroupAdmin?'flex':'none'}; background:rgba(255,255,255,0.2);"><i class="fas fa-palette"></i></button>
+      <button class="btn-icon" id="mobileRenameGroupBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-edit"></i></button>
+      <button class="btn-icon" id="mobileManageGroupBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-cog"></i></button>
+      <button class="btn-icon" id="mobileThemeBtn" style="background:rgba(255,255,255,0.2);"><i class="fas fa-palette"></i></button>
     ` : '';
-    if(currentChat.type==='group' && currentChat.id==='main') {
+    if (currentChat.type === 'group' && isAdmin) {
       setTimeout(() => {
         document.getElementById("mobileAddMemberBtn")?.addEventListener("click", showAddMemberModal);
-        document.getElementById("mobileAdminLoginBtn")?.addEventListener("click", showAdminLogin);
-        document.getElementById("mobileAdminLogoutBtn")?.addEventListener("click", adminLogout);
+        document.getElementById("mobileRenameGroupBtn")?.addEventListener("click", () => showRenameGroupModal(currentChat.id));
+        document.getElementById("mobileManageGroupBtn")?.addEventListener("click", () => showManageGroupModal(currentChat.id));
         document.getElementById("mobileThemeBtn")?.addEventListener("click", openThemeModal);
-      }, 100);
+      }, 50);
     }
   }
 
-  function renderActiveChatDesktop() { renderDesktopHeader(); renderDesktopMessages(); }
-  function renderActiveChatMobile() { renderMobileHeader(); renderMobileMessages(); }
+  function renderActiveChatDesktop() { renderDesktopHeader(); renderMessages(); }
+  function renderActiveChatMobile() { renderMobileHeader(); renderMessages(); }
 
   // ---------- MESSAGING ----------
-  function sendMessageWithAttachments(text, attachments, isMobileDevice) {
-    if(!text.trim() && attachments.length===0) return;
+  function sendMessage(text, attachments, isMobileDevice) {
+    if (!text.trim() && attachments.length === 0) return;
     let msg = {
       id: Date.now(),
       text: text.trim(),
@@ -880,21 +818,22 @@
       timestamp: new Date().toLocaleTimeString(),
       attachments: attachments
     };
-    if(currentChat.type==='group') {
-      if(currentChat.id==='main') { groupMessages.push(msg); saveAll(); }
+    if (currentChat.type === 'group') {
+      if (currentChat.id === 'main') groupMessages.push(msg);
       else {
-        let grp = customGroups.find(g=>g.id===currentChat.id);
-        if(grp) { grp.messages.push(msg); saveAll(); }
+        let grp = customGroups.find(g => g.id === currentChat.id);
+        if (grp) grp.messages.push(msg);
       }
-      if(isMobileDevice) renderMobileMessages(); else renderDesktopMessages();
+      saveAll();
+      renderMessages();
     } else {
-      if(!privateMessages[currentChat.id]) privateMessages[currentChat.id]=[];
+      if (!privateMessages[currentChat.id]) privateMessages[currentChat.id] = [];
       privateMessages[currentChat.id].push(msg);
       updatePrivateChatPreview(currentChat.id, text || (attachments[0]?.name || "Attachment"), msg.timestamp);
-      if(isMobileDevice) renderMobileMessages(); else renderDesktopMessages();
+      renderMessages();
     }
     let input = isMobileDevice ? document.getElementById("mobileMessageInput") : document.getElementById("desktopMessageInput");
-    if(input) input.value = "";
+    if (input) input.value = "";
     renderChatLists();
   }
 
@@ -904,30 +843,142 @@
     input.accept = "image/*,video/*,audio/*,application/pdf,.doc,.docx,.txt";
     input.onchange = e => {
       let file = e.target.files[0];
-      if(!file) return;
+      if (!file) return;
       let reader = new FileReader();
       let attType = file.type.split('/')[0];
-      if(attType === 'image') attType = 'image';
-      else if(attType === 'video') attType = 'video';
-      else if(attType === 'audio') attType = 'audio';
+      if (attType === 'image') attType = 'image';
+      else if (attType === 'video') attType = 'video';
+      else if (attType === 'audio') attType = 'audio';
       else attType = 'document';
       reader.onload = ev => {
-        let attachment = { type: attType, data: ev.target.result, name: file.name };
-        sendMessageWithAttachments("", [attachment], isMobileDevice);
+        sendMessage("", [{ type: attType, data: ev.target.result, name: file.name }], isMobileDevice);
       };
       reader.readAsDataURL(file);
     };
     input.click();
   }
 
-  // ---------- NEW GROUP & FILE CREATION ----------
+  // ---------- GROUP MANAGEMENT ----------
+  function showAddMemberModal() { document.getElementById("addMemberModal").style.display = "flex"; }
+  function addGroupMember() {
+    let name = document.getElementById("newMemberName").value.trim();
+    if (!name) return;
+    let id = name.toLowerCase().replace(/\s/g,'') + Date.now();
+    groupMembers.push({ id, name });
+    saveAll();
+    addSystemNotification(`${name} joined the group!`, 'group', currentChat.id);
+    document.getElementById("addMemberModal").style.display = "none";
+    document.getElementById("newMemberName").value = "";
+    renderChatLists();
+    if (!isMobile) renderDesktopHeader(); else renderMobileHeader();
+  }
+
+  function showRenameGroupModal(groupId) {
+    document.getElementById("renameGroupInput").value = "";
+    document.getElementById("renameGroupModal").style.display = "flex";
+    const confirm = () => {
+      let newName = document.getElementById("renameGroupInput").value.trim();
+      if (newName) {
+        if (groupId === 'main') localStorage.setItem("whispers_groupName", newName);
+        else { let grp = customGroups.find(g=>g.id===groupId); if(grp) grp.name = newName; saveAll(); }
+        addSystemNotification(`Group renamed to "${newName}"`, 'group', groupId);
+        renderChatLists();
+        if (!isMobile) renderDesktopHeader(); else renderMobileHeader();
+      }
+      document.getElementById("renameGroupModal").style.display = "none";
+    };
+    document.getElementById("confirmRenameBtn").onclick = confirm;
+    document.getElementById("cancelRenameBtn").onclick = () => document.getElementById("renameGroupModal").style.display = "none";
+  }
+
+  function showManageGroupModal(groupId) {
+    let members = [];
+    if (groupId === 'main') members = groupMembers.map(m => ({ id: m.id, name: m.name }));
+    else {
+      let grp = customGroups.find(g=>g.id===groupId);
+      if (grp) members = grp.members.map(mid => groupMembers.find(m=>m.id===mid) || { id: mid, name: mid });
+    }
+    const container = document.getElementById("groupMembersList");
+    container.innerHTML = "";
+    members.forEach(member => {
+      let isAdmin = (groupId === 'main') ? isUserAdminOfGroup('main') : (customGroups.find(g=>g.id===groupId)?.admins.includes(member.id) || false);
+      let div = document.createElement("div");
+      div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
+      div.style.padding = "8px"; div.style.borderBottom = "1px solid #eee";
+      div.innerHTML = `<span>${escapeHtml(member.name)} ${isAdmin ? '<span class="admin-badge">Admin</span>' : ''}</span>`;
+      if (isUserAdminOfGroup(groupId) && member.id !== currentUser?.username) {
+        let btn = document.createElement("button");
+        btn.textContent = isAdmin ? "Remove Admin" : "Make Admin";
+        btn.style.background = "#4a90e2"; btn.style.color = "white"; btn.style.border = "none";
+        btn.style.borderRadius = "20px"; btn.style.padding = "4px 12px"; btn.style.cursor = "pointer";
+        btn.onclick = () => { setGroupAdmin(groupId, member.id, !isAdmin); showManageGroupModal(groupId); };
+        div.appendChild(btn);
+      }
+      container.appendChild(div);
+    });
+    document.getElementById("manageGroupModal").style.display = "flex";
+    document.getElementById("closeManageModal").onclick = () => document.getElementById("manageGroupModal").style.display = "none";
+  }
+
+  // ---------- PLUS MENU ----------
+  let activeMenu = null;
+  function showPlusMenu(isDesktop) {
+    if (activeMenu) activeMenu.remove();
+    const menu = document.createElement("div");
+    menu.className = "plus-menu";
+    menu.innerHTML = `
+      <div class="plus-menu-item" id="menuNewPrivateChat"><i class="fas fa-user-plus"></i> New Private Chat</div>
+      <div class="plus-menu-item" id="menuNewGroup"><i class="fas fa-users"></i> Start New Group Chat</div>
+      <div class="plus-menu-item" id="menuCreateFile"><i class="fas fa-file-alt"></i> Create New File</div>
+    `;
+    const fab = isDesktop ? document.getElementById("desktopFabPlus") : document.getElementById("mobileFabPlus");
+    fab.parentNode.appendChild(menu);
+    activeMenu = menu;
+    const close = (e) => { if (activeMenu && !activeMenu.contains(e.target) && e.target !== fab) { activeMenu.remove(); activeMenu = null; document.removeEventListener("click", close); } };
+    setTimeout(() => document.addEventListener("click", close), 0);
+    document.getElementById("menuNewPrivateChat").onclick = () => { showNewChatModal(); activeMenu?.remove(); activeMenu = null; };
+    document.getElementById("menuNewGroup").onclick = () => { showNewGroupModal(); activeMenu?.remove(); activeMenu = null; };
+    document.getElementById("menuCreateFile").onclick = () => { showCreateFileModal(); activeMenu?.remove(); activeMenu = null; };
+  }
+
+  function showNewChatModal() {
+    let members = groupMembers.filter(m => !privateChats.find(c=>c.userId===m.id));
+    if (members.length === 0) { alert("No new members to chat with."); return; }
+    let list = document.createElement("div");
+    members.forEach(m => {
+      let btn = document.createElement("div");
+      btn.className = "theme-btn";
+      btn.style.margin = "4px"; btn.style.padding = "8px"; btn.style.cursor = "pointer";
+      btn.innerHTML = `<span>${m.name}</span>`;
+      btn.onclick = () => {
+        if (!privateChats.find(c=>c.userId===m.id)) {
+          privateChats.push({ userId: m.id, name: m.name, lastMessage: "", lastTimestamp: "" });
+          saveAll();
+          renderChatLists();
+        }
+        currentChat = { type: 'private', id: m.id };
+        if (isMobile) { showMobileChatView(); renderActiveChatMobile(); } else renderActiveChatDesktop();
+        renderChatLists();
+        modal.remove();
+      };
+      list.appendChild(btn);
+    });
+    let modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `<div class="modal-card"><h3>Start Private Chat</h3><div id="memberList"></div><button id="closeNewChat">Cancel</button></div>`;
+    modal.querySelector("#memberList").appendChild(list);
+    modal.querySelector("#closeNewChat").onclick = () => modal.remove();
+    document.body.appendChild(modal);
+    modal.style.display = "flex";
+  }
+
   function showNewGroupModal() {
     const container = document.getElementById("membersListForGroup");
     container.innerHTML = "";
-    groupMembers.forEach(member => {
+    groupMembers.forEach(m => {
       let div = document.createElement("div");
       div.className = "member-checkbox";
-      div.innerHTML = `<input type="checkbox" value="${member.id}" id="member_${member.id}"> <label for="member_${member.id}">${member.name}</label>`;
+      div.innerHTML = `<input type="checkbox" value="${m.id}" id="member_${m.id}"> <label for="member_${m.id}">${m.name}</label>`;
       container.appendChild(div);
     });
     document.getElementById("newGroupModal").style.display = "flex";
@@ -935,24 +986,21 @@
 
   function createNewGroup() {
     let name = document.getElementById("groupNameInput").value.trim();
-    if(!name) { alert("Please enter a group name"); return; }
+    if (!name) { alert("Please enter a group name"); return; }
     let selected = [];
     document.querySelectorAll("#membersListForGroup input:checked").forEach(cb => selected.push(cb.value));
-    if(selected.length===0) { alert("Select at least one member"); return; }
-    if(!selected.includes(currentUser.username)) selected.push(currentUser.username);
+    if (selected.length === 0) { alert("Select at least one member"); return; }
+    if (!selected.includes(currentUser.username)) selected.push(currentUser.username);
     let newId = "group_" + Date.now();
     let newGroup = {
-      id: newId,
-      name: name,
-      members: selected,
-      messages: [],
-      createdAt: Date.now()
+      id: newId, name: name, members: selected, messages: [],
+      admins: [currentUser.username], createdBy: currentUser.username
     };
     customGroups.push(newGroup);
     saveAll();
     addSystemNotification(`New group "${name}" created!`, 'group', newId);
     currentChat = { type: 'group', id: newId };
-    if(isMobile) { showMobileChatView(); renderActiveChatMobile(); } else renderActiveChatDesktop();
+    if (isMobile) { showMobileChatView(); renderActiveChatMobile(); } else renderActiveChatDesktop();
     renderChatLists();
     document.getElementById("newGroupModal").style.display = "none";
     document.getElementById("groupNameInput").value = "";
@@ -965,83 +1013,80 @@
   }
 
   function createAndAttachFile() {
-    let filename = document.getElementById("fileNameInput").value.trim();
+    let filename = document.getElementById("fileNameInput").value.trim() || "document.txt";
     let content = document.getElementById("fileContentInput").value;
-    if(!filename) filename = "untitled.txt";
     const blob = new Blob([content], {type: "text/plain"});
     const reader = new FileReader();
-    reader.onload = function(ev) {
-      let attachment = { type: 'document', data: ev.target.result, name: filename };
-      sendMessageWithAttachments("", [attachment], isMobile);
+    reader.onload = ev => {
+      sendMessage("", [{ type: 'document', data: ev.target.result, name: filename }], isMobile);
     };
     reader.readAsDataURL(blob);
     document.getElementById("createFileModal").style.display = "none";
   }
 
-  // ---------- PLUS MENU ----------
-  let activeMenu = null;
-  function showPlusMenu(isDesktop) {
-    if(activeMenu) activeMenu.remove();
-    const menu = document.createElement("div");
-    menu.className = "plus-menu";
-    menu.innerHTML = `
-      <div class="plus-menu-item" id="menuNewPrivateChat"><i class="fas fa-user-plus"></i> New Private Chat</div>
-      <div class="plus-menu-item" id="menuNewGroup"><i class="fas fa-users"></i> Start New Group Chat</div>
-      <div class="plus-menu-item" id="menuCreateFile"><i class="fas fa-file-alt"></i> Create New File</div>
-    `;
-    const fab = isDesktop ? document.getElementById("desktopFabPlus") : document.getElementById("mobileFabPlus");
-    fab.parentNode.appendChild(menu);
-    activeMenu = menu;
-    const closeMenu = (e) => { if(activeMenu && !activeMenu.contains(e.target) && e.target !== fab) { activeMenu.remove(); activeMenu=null; document.removeEventListener("click", closeMenu); } };
-    setTimeout(() => document.addEventListener("click", closeMenu), 0);
-    document.getElementById("menuNewPrivateChat").onclick = () => { showNewChatModal(); activeMenu?.remove(); activeMenu=null; };
-    document.getElementById("menuNewGroup").onclick = () => { showNewGroupModal(); activeMenu?.remove(); activeMenu=null; };
-    document.getElementById("menuCreateFile").onclick = () => { showCreateFileModal(); activeMenu?.remove(); activeMenu=null; };
+  // ---------- THEME MODAL ----------
+  function openThemeModal() {
+    if (!isUserAdminOfGroup(currentChat.id)) return;
+    renderThemeModal();
+    document.getElementById("themeModal").style.display = "flex";
   }
-
-  // ---------- ADMIN & GROUP MEMBERS (main group only) ----------
-  function showAddMemberModal() { if(!isGroupAdmin) { alert("Only group admin can add members."); return; } document.getElementById("addMemberModal").style.display = "flex"; }
-  function addGroupMember() {
-    let name = document.getElementById("newMemberName").value.trim();
-    if(!name) return;
-    let id = name.toLowerCase().replace(/\s/g,'') + Date.now();
-    groupMembers.push({ id, name });
-    saveAll();
-    addSystemNotification(`${name} joined the main group!`, 'group', 'main');
-    document.getElementById("addMemberModal").style.display = "none";
-    document.getElementById("newMemberName").value = "";
-    renderChatLists();
-    if(!isMobile) renderDesktopHeader(); else renderMobileHeader();
+  function renderThemeModal() {
+    let container = document.getElementById("themeListContainer");
+    container.innerHTML = "";
+    for (let [id, t] of Object.entries(builtinThemes)) {
+      let btn = document.createElement("div");
+      btn.className = "theme-btn";
+      btn.style.margin = "4px"; btn.style.padding = "8px"; btn.style.cursor = "pointer";
+      btn.innerHTML = `<span>${t.name}</span>`;
+      btn.onclick = () => { applyThemeById(id); renderThemeModal(); addSystemNotification(`Theme: ${t.name}`, 'group', currentChat.id); };
+      container.appendChild(btn);
+    }
+    customThemes.forEach(c => {
+      let btn = document.createElement("div");
+      btn.className = "theme-btn";
+      btn.style.display = "flex"; btn.style.justifyContent = "space-between"; btn.style.margin = "4px"; btn.style.padding = "8px";
+      btn.innerHTML = `<span>🎨 ${c.name}</span><button class="delete-theme" style="background:red;">🗑️</button>`;
+      btn.querySelector(".delete-theme").onclick = (e) => { e.stopPropagation(); customThemes = customThemes.filter(t=>t.id!==c.id); localStorage.setItem("whispers_custom_themes", JSON.stringify(customThemes)); if (localStorage.getItem("whispers_theme")===c.id) applyThemeById("skyblue"); renderThemeModal(); };
+      btn.onclick = (e) => { if (e.target.tagName !== 'BUTTON') applyThemeById(c.id); };
+      container.appendChild(btn);
+    });
+    let newBtn = document.createElement("div");
+    newBtn.className = "theme-btn";
+    newBtn.style.margin = "4px"; newBtn.style.padding = "8px"; newBtn.style.cursor = "pointer";
+    newBtn.innerHTML = `<span>➕ Create Custom</span>`;
+    newBtn.onclick = () => {
+      let name = prompt("Theme name:");
+      if (!name) return;
+      let vars = {};
+      for (let prop of ['--app-bg','--header-gradient-start','--header-gradient-end','--sent-bubble','--received-bubble','--input-area-bg','--send-btn-bg']) {
+        let val = prompt(`Enter value for ${prop} (color or hex)`, getComputedStyle(document.documentElement).getPropertyValue(prop));
+        if (val) vars[prop] = val;
+      }
+      let id = "custom_"+Date.now();
+      customThemes.push({id, name, vars});
+      localStorage.setItem("whispers_custom_themes", JSON.stringify(customThemes));
+      applyThemeById(id);
+      renderThemeModal();
+    };
+    container.appendChild(newBtn);
   }
-  function showAdminLogin() {
-    let pwd = prompt("Enter admin password:");
-    if(pwd === "admin123") {
-      isGroupAdmin = true;
-      localStorage.setItem("whispers_admin", "true");
-      addSystemNotification("Admin mode activated.", 'group', 'main');
-      if(!isMobile) renderDesktopHeader(); else renderMobileHeader();
-    } else alert("Wrong password");
-  }
-  function adminLogout() { isGroupAdmin=false; localStorage.removeItem("whispers_admin"); addSystemNotification("Admin mode deactivated.", 'group', 'main'); if(!isMobile) renderDesktopHeader(); else renderMobileHeader(); }
 
   // ---------- AUTH & LOGOUT ----------
   function logout() {
     localStorage.removeItem("whispers_current_user");
     currentUser = null;
-    isGroupAdmin = false;
-    localStorage.removeItem("whispers_admin");
     document.getElementById("authModal").style.display = "flex";
   }
   function registerUser(username, password, displayName) {
     let users = JSON.parse(localStorage.getItem("whispers_users") || "{}");
-    if(users[username]) return false;
+    if (users[username]) return false;
     users[username] = { password, displayName };
     localStorage.setItem("whispers_users", JSON.stringify(users));
     return true;
   }
   function loginUser(username, password) {
     let users = JSON.parse(localStorage.getItem("whispers_users") || "{}");
-    if(users[username] && users[username].password === password) {
+    if (users[username] && users[username].password === password) {
       currentUser = { username, displayName: users[username].displayName };
       localStorage.setItem("whispers_current_user", JSON.stringify(currentUser));
       return true;
@@ -1060,28 +1105,29 @@
   function startApp() {
     loadData();
     loadTheme();
-    if(localStorage.getItem("whispers_admin")==="true") isGroupAdmin=true;
+    initMainGroupAdmin();
     renderChatLists();
-    if(isMobile) {
-      document.getElementById("mobileListView").classList.add("list-view");
-      document.getElementById("mobileChatView").classList.remove("active-chat");
+    if (isMobile) {
+      document.getElementById("mobileListView").style.transform = "translateX(0)";
+      document.getElementById("mobileChatView").style.transform = "translateX(100%)";
       currentChat = { type: 'group', id: 'main' };
       renderActiveChatMobile();
     } else {
       currentChat = { type: 'group', id: 'main' };
       renderActiveChatDesktop();
     }
-    document.getElementById("desktopSendBtn").onclick = () => sendMessageWithAttachments(document.getElementById("desktopMessageInput").value, [], false);
+    // Event listeners
+    document.getElementById("desktopSendBtn").onclick = () => sendMessage(document.getElementById("desktopMessageInput").value, [], false);
     document.getElementById("desktopAttachBtn").onclick = () => attachFile(false);
-    document.getElementById("desktopMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], false); });
-    document.getElementById("mobileSendBtn").onclick = () => sendMessageWithAttachments(document.getElementById("mobileMessageInput").value, [], true);
+    document.getElementById("desktopMessageInput").addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(e.target.value, [], false); });
+    document.getElementById("mobileSendBtn").onclick = () => sendMessage(document.getElementById("mobileMessageInput").value, [], true);
     document.getElementById("mobileAttachBtn").onclick = () => attachFile(true);
-    document.getElementById("mobileMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], true); });
+    document.getElementById("mobileMessageInput").addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(e.target.value, [], true); });
     document.getElementById("mobileBackBtn").onclick = () => showMobileListView();
     document.getElementById("desktopFabPlus").onclick = (e) => { e.stopPropagation(); showPlusMenu(true); };
     document.getElementById("mobileFabPlus").onclick = (e) => { e.stopPropagation(); showPlusMenu(false); };
-    document.getElementById("desktopLogoutBtn").addEventListener("click", logout);
-    document.getElementById("mobileLogoutBtn").addEventListener("click", logout);
+    document.getElementById("desktopLogoutBtn").onclick = logout;
+    document.getElementById("mobileLogoutBtn").onclick = logout;
   }
   function showMobileChatView() {
     document.getElementById("mobileListView").style.transform = "translateX(-100%)";
@@ -1091,82 +1137,12 @@
     document.getElementById("mobileListView").style.transform = "translateX(0)";
     document.getElementById("mobileChatView").style.transform = "translateX(100%)";
   }
-  function showNewChatModal() {
-    let members = groupMembers.filter(m => !privateChats.find(c=>c.userId===m.id));
-    if(members.length===0) { alert("No new members to chat with."); return; }
-    let list = document.createElement("div");
-    members.forEach(m=>{
-      let btn = document.createElement("div");
-      btn.className = "theme-btn";
-      btn.innerHTML = `<span>${m.name}</span>`;
-      btn.onclick = () => {
-        if(!privateChats.find(c=>c.userId===m.id)) {
-          privateChats.push({ userId:m.id, name:m.name, lastMessage:"", lastTimestamp:"" });
-          saveAll();
-          renderChatLists();
-        }
-        currentChat = { type:'private', id:m.id };
-        if(isMobile) { showMobileChatView(); renderActiveChatMobile(); } else renderActiveChatDesktop();
-        renderChatLists();
-        document.getElementById("newChatModal")?.remove();
-      };
-      list.appendChild(btn);
-    });
-    let modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `<div class="modal-card"><h3>Start Private Chat</h3><div id="memberList"></div><button id="closeNewChat">Cancel</button></div>`;
-    modal.querySelector("#memberList").appendChild(list);
-    modal.querySelector("#closeNewChat").onclick = () => modal.remove();
-    document.body.appendChild(modal);
-    modal.style.display = "flex";
-  }
-
-  // Theme modal
-  function openThemeModal() { if(!isGroupAdmin) return; renderThemeModal(); document.getElementById("themeModal").style.display="flex"; }
-  function renderThemeModal() {
-    let container = document.getElementById("themeListContainer");
-    container.innerHTML = "";
-    for(let [id,t] of Object.entries(builtinThemes)) {
-      let btn = document.createElement("div");
-      btn.className = `theme-btn ${currentThemeId===id?'active':''}`;
-      btn.innerHTML = `<span>${t.name}</span>`;
-      btn.onclick = () => { applyThemeById(id); renderThemeModal(); addSystemNotification(`Theme: ${t.name}`,'group','main'); };
-      container.appendChild(btn);
-    }
-    customThemes.forEach(c=>{
-      let btn = document.createElement("div");
-      btn.className = `theme-btn ${currentThemeId===c.id?'active':''}`;
-      btn.innerHTML = `<span>🎨 ${c.name}</span><button class="delete-theme">🗑️</button>`;
-      btn.onclick = (e) => { if(e.target.tagName!='BUTTON') applyThemeById(c.id); };
-      btn.querySelector(".delete-theme").onclick = (e) => { e.stopPropagation(); customThemes=customThemes.filter(t=>t.id!==c.id); localStorage.setItem("whispers_custom_themes",JSON.stringify(customThemes)); if(currentThemeId===c.id) applyThemeById("skyblue"); renderThemeModal(); };
-      container.appendChild(btn);
-    });
-    let newBtn = document.createElement("div");
-    newBtn.className = "theme-btn";
-    newBtn.innerHTML = `<span>➕ Create Custom</span>`;
-    newBtn.onclick = () => {
-      let name = prompt("Theme name:");
-      if(!name) return;
-      let vars = {};
-      for(let prop of ['--app-bg','--header-gradient-start','--header-gradient-end','--sent-bubble','--received-bubble','--input-area-bg','--send-btn-bg']) {
-        let val = prompt(`Enter value for ${prop} (color or hex)`, getComputedStyle(document.documentElement).getPropertyValue(prop));
-        if(val) vars[prop]=val;
-      }
-      let id = "custom_"+Date.now();
-      customThemes.push({id,name,vars});
-      localStorage.setItem("whispers_custom_themes",JSON.stringify(customThemes));
-      applyThemeById(id);
-      renderThemeModal();
-    };
-    container.appendChild(newBtn);
-  }
-
-  function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
   // ---------- INIT ----------
   function init() {
     const storedUser = localStorage.getItem("whispers_current_user");
-    if(storedUser) {
+    if (storedUser) {
       currentUser = JSON.parse(storedUser);
       closeAuthModal();
       startApp();
@@ -1180,18 +1156,15 @@
   document.getElementById("doLoginBtn").onclick = () => {
     let u = document.getElementById("loginUsername").value;
     let p = document.getElementById("loginPassword").value;
-    if(loginUser(u,p)) { closeAuthModal(); startApp(); }
+    if (loginUser(u,p)) { closeAuthModal(); startApp(); }
     else document.getElementById("authError").innerText = "Invalid credentials";
   };
   document.getElementById("doSignupBtn").onclick = () => {
     let u = document.getElementById("signupUsername").value;
     let p = document.getElementById("signupPassword").value;
     let d = document.getElementById("signupDisplayName").value;
-    if(registerUser(u,p,d)) {
-      loginUser(u,p);
-      closeAuthModal();
-      startApp();
-    } else document.getElementById("authError").innerText = "Username exists";
+    if (registerUser(u,p,d)) { loginUser(u,p); closeAuthModal(); startApp(); }
+    else document.getElementById("authError").innerText = "Username exists";
   };
   document.getElementById("googleLoginBtn").onclick = () => federatedLogin("Google");
   document.getElementById("facebookLoginBtn").onclick = () => federatedLogin("Facebook");
@@ -1202,16 +1175,16 @@
   document.getElementById("cancelGroupModal").onclick = () => document.getElementById("newGroupModal").style.display="none";
   document.getElementById("confirmCreateFile").onclick = createAndAttachFile;
   document.getElementById("cancelFileModal").onclick = () => document.getElementById("createFileModal").style.display="none";
-  document.getElementById("authModal").addEventListener("click", e=>{ if(e.target===document.getElementById("authModal")) closeAuthModal(); });
-  document.getElementById("addMemberModal").addEventListener("click", e=>{ if(e.target===document.getElementById("addMemberModal")) document.getElementById("addMemberModal").style.display="none"; });
-  document.getElementById("themeModal").addEventListener("click", e=>{ if(e.target===document.getElementById("themeModal")) document.getElementById("themeModal").style.display="none"; });
+  document.getElementById("authModal").addEventListener("click", e => { if (e.target === document.getElementById("authModal")) closeAuthModal(); });
+  document.getElementById("addMemberModal").addEventListener("click", e => { if (e.target === document.getElementById("addMemberModal")) document.getElementById("addMemberModal").style.display="none"; });
+  document.getElementById("themeModal").addEventListener("click", e => { if (e.target === document.getElementById("themeModal")) document.getElementById("themeModal").style.display="none"; });
   window.addEventListener("resize", () => {
     isMobile = window.innerWidth <= 768;
-    if(isMobile) {
+    if (isMobile) {
       document.getElementById("mobileListView").style.transform = "translateX(0)";
       document.getElementById("mobileChatView").style.transform = "translateX(100%)";
     } else {
-      if(currentChat) renderActiveChatDesktop();
+      renderActiveChatDesktop();
     }
   });
   init();
