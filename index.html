@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Group Owners Can Add Members</title>
+  <title>Whispers · Square Logo, No Voice</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -72,7 +72,27 @@
       justify-content: space-between;
       align-items: center;
     }
-    .sidebar-header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+    /* Square logo with skyblue-pink gradient */
+    .square-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #87CEEB, #FF69B4);
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 24px;
+      color: white;
+      margin-right: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .sidebar-header h2 {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .logout-icon {
       background: rgba(255,255,255,0.2);
       border: none;
@@ -406,7 +426,7 @@
   <div class="desktop-layout">
     <div class="sidebar">
       <div class="sidebar-header">
-        <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
+        <h2><span class="square-logo">W</span> Whispers</h2>
         <button id="desktopLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="chat-list" id="desktopChatList"></div>
@@ -427,7 +447,10 @@
   <div class="mobile-layout">
     <div id="mobileListView" class="mobile-view list-view">
       <div class="mobile-header">
-        <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="square-logo">W</span>
+          <h2 style="margin:0;">Whispers</h2>
+        </div>
         <button id="mobileLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="mobile-chat-list" id="mobileChatList"></div>
@@ -449,10 +472,12 @@
   </div>
 </div>
 
-<!-- Auth Modal (Email/Password only) -->
+<!-- Auth Modal (Email/Password + Google) -->
 <div id="authModal" class="modal" style="display: flex;">
   <div class="modal-card">
-    <i class="fab fa-whatsapp" style="font-size: 40px; color:#4a90e2;"></i>
+    <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+      <span class="square-logo" style="width: 60px; height: 60px; font-size: 36px; border-radius: 18px;">W</span>
+    </div>
     <h3>Welcome to Whispers</h3>
     <div id="authTabs" style="display: flex; gap: 10px; margin-bottom: 15px;">
       <button id="loginTab" style="background:#4a90e2;">Login</button>
@@ -462,6 +487,9 @@
       <input type="email" id="loginUsername" placeholder="Email">
       <input type="password" id="loginPassword" placeholder="Password">
       <button id="doLoginBtn">Login</button>
+      <div style="margin-top: 15px;"><hr><p>Have a google account?</p>
+        <button id="googleLoginBtn" style="background:#db4437;"><i class="fab fa-google"></i> Google</button>
+      </div>
     </div>
     <div id="signupPanel" style="display:none;">
       <input type="email" id="signupUsername" placeholder="Email">
@@ -476,7 +504,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, query, orderBy, serverTimestamp, setDoc, getDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -610,10 +638,7 @@
     if (mute) await updateDoc(doc(db, 'groups', groupId), { muted: arrayUnion(userId) });
     else await updateDoc(doc(db, 'groups', groupId), { muted: arrayRemove(userId) });
   }
-  // NEW: Add member to group (only for admins)
-  async function addMemberToGroup(groupId, userId) {
-    await updateDoc(doc(db, 'groups', groupId), { members: arrayUnion(userId) });
-  }
+  async function addMemberToGroup(groupId, userId) { await updateDoc(doc(db, 'groups', groupId), { members: arrayUnion(userId) }); }
   async function createGroup(name, memberIds) {
     const groupRef = doc(collection(db, 'groups'));
     await setDoc(groupRef, { name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], muted: [], createdAt: serverTimestamp() });
@@ -778,7 +803,6 @@
     }
   }
 
-  // NEW: Show group management modal with "Add Member" option
   async function showGroupManageModal(groupId) {
     try {
       const groupSnap = await getDoc(doc(db, 'groups', groupId));
@@ -786,34 +810,14 @@
       const data = groupSnap.data();
       const members = data.members || [];
       const muted = data.muted || [];
-      
-      // Fetch all users to display non-members for adding
       const allUsersSnap = await getDocs(collection(db, 'users'));
       const allUsers = [];
-      allUsersSnap.forEach(doc => {
-        if (!members.includes(doc.id)) {
-          allUsers.push({ id: doc.id, name: doc.data().displayName || doc.id });
-        }
-      });
-      
+      allUsersSnap.forEach(doc => { if (!members.includes(doc.id)) allUsers.push({ id: doc.id, name: doc.data().displayName || doc.id }); });
       const modal = document.createElement('div');
       modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="modal-card">
-          <h3>Manage Group</h3>
-          <div id="memberListDiv" style="max-height:200px; overflow-y:auto;"></div>
-          <hr style="margin: 10px 0;">
-          <div id="addMemberSection">
-            <h4>Add Member</h4>
-            <div id="nonMemberList" style="max-height:150px; overflow-y:auto;"></div>
-          </div>
-          <button id="closeGroupModalBtn">Close</button>
-        </div>
-      `;
+      modal.innerHTML = `<div class="modal-card"><h3>Manage Group</h3><div id="memberListDiv" style="max-height:200px; overflow-y:auto;"></div><hr style="margin:10px 0;"><div><h4>Add Member</h4><div id="nonMemberList" style="max-height:150px; overflow-y:auto;"></div></div><button id="closeGroupModalBtn">Close</button></div>`;
       const memberListDiv = modal.querySelector('#memberListDiv');
       const nonMemberListDiv = modal.querySelector('#nonMemberList');
-      
-      // Display current members with kick/mute buttons
       for (const uid of members) {
         const userSnap = await getDoc(doc(db, 'users', uid));
         const name = userSnap.exists() ? (userSnap.data().displayName || uid) : uid;
@@ -824,66 +828,33 @@
         row.innerHTML = `<span>${escapeHtml(name)} ${isMutedUser ? '(Muted)' : ''}</span>
           <div><button class="kickBtn" data-uid="${uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>
           <button class="muteBtn" data-uid="${uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${isMutedUser ? 'Unmute' : 'Mute'}</button></div>`;
-        row.querySelector('.kickBtn').onclick = async () => {
-          if (confirm(`Kick ${name}?`)) {
-            await kickMember(groupId, uid);
-            modal.remove();
-          }
-        };
-        row.querySelector('.muteBtn').onclick = async () => {
-          await toggleMute(groupId, uid, !isMutedUser);
-          modal.remove();
-        };
+        row.querySelector('.kickBtn').onclick = async () => { if (confirm(`Kick ${name}?`)) { await kickMember(groupId, uid); modal.remove(); } };
+        row.querySelector('.muteBtn').onclick = async () => { await toggleMute(groupId, uid, !isMutedUser); modal.remove(); };
         memberListDiv.appendChild(row);
       }
-      
-      // Display non-members with "Add" button
-      if (allUsers.length === 0) {
-        nonMemberListDiv.innerHTML = '<div style="padding:8px; text-align:center;">No available users to add</div>';
-      } else {
-        for (const user of allUsers) {
-          const row = document.createElement('div');
-          row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
-          row.style.padding = '8px'; row.style.borderBottom = '1px solid #eee';
-          row.innerHTML = `<span>${escapeHtml(user.name)}</span>
-            <button class="addMemberBtn" data-uid="${user.id}" style="background:#2ecc71; color:white; border:none; border-radius:20px; padding:4px 12px; cursor:pointer;">Add</button>`;
-          row.querySelector('.addMemberBtn').onclick = async () => {
-            await addMemberToGroup(groupId, user.id);
-            modal.remove();
-            // Show a system notification in the group
-            addSystemNotification(`${user.name} was added to the group by an admin`, 'group', groupId);
-          };
-          nonMemberListDiv.appendChild(row);
-        }
+      for (const user of allUsers) {
+        const row = document.createElement('div');
+        row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
+        row.style.padding = '8px'; row.style.borderBottom = '1px solid #eee';
+        row.innerHTML = `<span>${escapeHtml(user.name)}</span><button class="addMemberBtn" data-uid="${user.id}" style="background:#2ecc71; color:white; border:none; border-radius:20px; padding:4px 12px; cursor:pointer;">Add</button>`;
+        row.querySelector('.addMemberBtn').onclick = async () => { await addMemberToGroup(groupId, user.id); modal.remove(); addSystemNotification(`${user.name} was added to the group`, 'group', groupId); };
+        nonMemberListDiv.appendChild(row);
       }
-      
       modal.querySelector('#closeGroupModalBtn').onclick = () => modal.remove();
       document.body.appendChild(modal);
       modal.style.display = 'flex';
     } catch(e) { console.error(e); }
   }
 
-  // Helper to add system notification (already exists, but we call it from above)
   async function addSystemNotification(text, chatType = 'group', chatId = 'main') {
-    const msg = {
-      id: Date.now(),
-      text: `🔔 ${text}`,
-      sender: "System",
-      isSelf: false,
-      timestamp: new Date().toLocaleTimeString(),
-      attachments: []
-    };
+    const msg = { id: Date.now(), text: `🔔 ${text}`, sender: "System", isSelf: false, timestamp: new Date().toLocaleTimeString(), attachments: [] };
     if (chatType === 'group' && chatId === 'main') {
       groupMessages.push(msg);
       saveAll();
       if (currentChat.type === 'group' && currentChat.id === 'main') renderMessages();
     } else if (chatType === 'group' && chatId !== 'main') {
       const grp = customGroups.find(g => g.id === chatId);
-      if (grp) {
-        grp.messages.push(msg);
-        saveAll();
-        if (currentChat.type === 'group' && currentChat.id === chatId) renderMessages();
-      }
+      if (grp) { grp.messages.push(msg); saveAll(); if (currentChat.type === 'group' && currentChat.id === chatId) renderMessages(); }
     } else if (chatType === 'private' && chatId) {
       if (!privateMessages[chatId]) privateMessages[chatId] = [];
       privateMessages[chatId].push(msg);
@@ -1022,6 +993,21 @@
     input.click();
   }
 
+  // ---------- Data Persistence Helpers ----------
+  let groupMessages = [];
+  let customGroups = [];
+  let privateMessages = {};
+  let privateChats = [];
+  let groupMembers = [];
+  async function saveAll() {
+    localStorage.setItem("whispers_group_messages", JSON.stringify(groupMessages));
+    localStorage.setItem("whispers_custom_groups", JSON.stringify(customGroups));
+    localStorage.setItem("whispers_private_messages", JSON.stringify(privateMessages));
+    localStorage.setItem("whispers_private_chats", JSON.stringify(privateChats));
+    localStorage.setItem("whispers_group_members", JSON.stringify(groupMembers));
+  }
+  function updatePrivateChatPreview(userId, lastMsg, timestamp) { /* stub, will be replaced later */ }
+
   // ---------- Auth & Init ----------
   async function startApp(user) {
     currentUser = user;
@@ -1060,7 +1046,7 @@
     else { document.getElementById('authModal').style.display = 'flex'; }
   });
 
-  // Auth UI Handlers (email/password only)
+  // Auth UI Handlers
   document.getElementById('loginTab').onclick = () => { document.getElementById('loginPanel').style.display = 'block'; document.getElementById('signupPanel').style.display = 'none'; };
   document.getElementById('signupTab').onclick = () => { document.getElementById('loginPanel').style.display = 'none'; document.getElementById('signupPanel').style.display = 'block'; };
   document.getElementById('doLoginBtn').onclick = async () => {
@@ -1078,31 +1064,15 @@
       await setDoc(doc(db, 'users', cred.user.uid), { displayName: name, email, online: true, lastSeen: serverTimestamp() });
     } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
+  document.getElementById('googleLoginBtn').onclick = async () => {
+    const provider = new GoogleAuthProvider();
+    try { await signInWithPopup(auth, provider); } catch (err) { document.getElementById('authError').innerText = err.message; }
+  };
   document.getElementById('closeModalBtn').onclick = () => document.getElementById('authModal').style.display = 'none';
   window.addEventListener('resize', () => {
     isMobile = window.innerWidth <= 768;
     if (!isMobile && currentChat) loadActiveChatDesktop();
   });
-  
-  // Helper to save all data (used by addSystemNotification)
-  let customGroups = []; // we need to define this for addSystemNotification
-  let groupMessages = []; // defined above but need to be accessible
-  let privateMessages = {};
-  async function saveAll() {
-    localStorage.setItem("whispers_group_messages", JSON.stringify(groupMessages));
-    localStorage.setItem("whispers_custom_groups", JSON.stringify(customGroups));
-    localStorage.setItem("whispers_private_messages", JSON.stringify(privateMessages));
-    localStorage.setItem("whispers_private_chats", JSON.stringify(privateChats));
-    localStorage.setItem("whispers_group_members", JSON.stringify(groupMembers));
-  }
-  // Re-declare needed variables (they already exist in global scope, but we ensure they are defined)
-  let privateChats = [];
-  let groupMembers = [];
-  window.customGroups = customGroups;
-  window.groupMessages = groupMessages;
-  window.privateMessages = privateMessages;
-  window.privateChats = privateChats;
-  window.groupMembers = groupMembers;
 </script>
 </body>
 </html>
