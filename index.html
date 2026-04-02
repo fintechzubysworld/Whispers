@@ -3,18 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Whispers · Responsive Messenger</title>
-  <!-- Font Awesome 6 -->
+  <title>Whispers · Floating + Button</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: #121212;
@@ -25,8 +18,6 @@
       overflow: hidden;
       transition: background 0.2s;
     }
-
-    /* CSS Variables */
     :root {
       --app-bg: #f0f2f5;
       --sidebar-bg: #ffffff;
@@ -53,11 +44,7 @@
       --time-color: #6b6f76;
       --border-color: #e9ecef;
     }
-
-    body {
-      background: var(--app-bg);
-    }
-
+    body { background: var(--app-bg); }
     .whispers-app {
       width: 100%;
       max-width: 1100px;
@@ -70,14 +57,12 @@
       transition: background 0.2s;
       position: relative;
     }
-
-    /* Desktop/tablet layout: sidebar + main chat */
+    /* Desktop Layout */
     .desktop-layout {
       display: flex;
       height: 100%;
       width: 100%;
     }
-
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -85,15 +70,16 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform 0.3s ease;
+      position: relative;
     }
-
     .sidebar-header {
       padding: 16px;
       background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
       color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-
     .sidebar-header h2 {
       font-size: 20px;
       font-weight: 600;
@@ -101,19 +87,26 @@
       align-items: center;
       gap: 8px;
     }
-
-    .sidebar-header p {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-top: 4px;
+    .logout-icon {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 34px;
+      height: 34px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
     }
-
+    .logout-icon:hover {
+      background: rgba(255,255,255,0.35);
+      transform: scale(0.96);
+    }
     .chat-list {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 0;
+      padding: 8px 0 80px 0; /* make room for floating button */
     }
-
     .chat-list-item {
       display: flex;
       align-items: center;
@@ -123,16 +116,11 @@
       transition: background 0.1s;
       border-left: 3px solid transparent;
     }
-
-    .chat-list-item:hover {
-      background: var(--sidebar-hover);
-    }
-
+    .chat-list-item:hover { background: var(--sidebar-hover); }
     .chat-list-item.active {
       background: var(--sidebar-active);
       border-left-color: var(--header-gradient-start);
     }
-
     .chat-avatar {
       width: 48px;
       height: 48px;
@@ -145,20 +133,8 @@
       font-size: 20px;
       flex-shrink: 0;
     }
-
-    .chat-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .chat-name {
-      font-weight: 600;
-      font-size: 15px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
+    .chat-info { flex: 1; min-width: 0; }
+    .chat-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .chat-preview {
       font-size: 12px;
       color: var(--time-color);
@@ -167,26 +143,30 @@
       text-overflow: ellipsis;
       margin-top: 2px;
     }
-
-    .new-chat-btn {
-      margin: 12px;
-      padding: 10px;
+    /* Floating plus button */
+    .fab-plus {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
       background: var(--send-btn-bg);
       color: white;
       border: none;
-      border-radius: 40px;
-      font-weight: 500;
+      border-radius: 50%;
+      font-size: 24px;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      transition: 0.2s;
+      z-index: 10;
     }
-
-    .new-chat-btn:hover {
+    .fab-plus:hover {
       background: var(--send-btn-hover);
+      transform: scale(1.05);
     }
-
     .main-chat {
       flex: 1;
       display: flex;
@@ -195,7 +175,6 @@
       background: var(--chat-bg);
       background-image: var(--chat-bg-pattern);
     }
-
     .chat-header {
       background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
       padding: 14px 20px;
@@ -204,7 +183,6 @@
       justify-content: space-between;
       color: var(--header-text);
     }
-
     .chat-title {
       font-size: 18px;
       font-weight: 600;
@@ -212,17 +190,8 @@
       align-items: center;
       gap: 8px;
     }
-
-    .chat-subtitle {
-      font-size: 12px;
-      opacity: 0.9;
-    }
-
-    .admin-controls {
-      display: flex;
-      gap: 8px;
-    }
-
+    .chat-subtitle { font-size: 12px; opacity: 0.9; }
+    .admin-controls { display: flex; gap: 8px; }
     .btn-icon {
       background: rgba(255,255,255,0.2);
       border: none;
@@ -231,14 +200,7 @@
       height: 34px;
       border-radius: 40px;
       cursor: pointer;
-      transition: 0.2s;
     }
-
-    .btn-icon:hover {
-      background: rgba(255,255,255,0.35);
-      transform: scale(0.96);
-    }
-
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -247,21 +209,9 @@
       flex-direction: column;
       gap: 12px;
     }
-
-    .message-row {
-      display: flex;
-      width: 100%;
-      animation: fadeSlideUp 0.2s;
-    }
-
-    .message-row.sent {
-      justify-content: flex-end;
-    }
-
-    .message-row.received {
-      justify-content: flex-start;
-    }
-
+    .message-row { display: flex; width: 100%; animation: fadeSlideUp 0.2s; }
+    .message-row.sent { justify-content: flex-end; }
+    .message-row.received { justify-content: flex-start; }
     .message-bubble {
       max-width: 78%;
       padding: 10px 14px;
@@ -269,19 +219,16 @@
       position: relative;
       box-shadow: 0 1px 1px rgba(0,0,0,0.05);
     }
-
     .sent .message-bubble {
       background: var(--sent-bubble);
       border-bottom-right-radius: 6px;
       color: var(--sent-bubble-text);
     }
-
     .received .message-bubble {
       background: var(--received-bubble);
       border-bottom-left-radius: 6px;
       color: var(--received-bubble-text);
     }
-
     .sender-name {
       font-size: 12px;
       font-weight: 600;
@@ -291,22 +238,9 @@
       gap: 6px;
       color: var(--sender-name-color);
     }
-
-    .received .sender-name {
-      color: var(--received-sender-color);
-    }
-
-    .message-text {
-      font-size: 14px;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-
-    .message-text a {
-      color: #075e54;
-      text-decoration: none;
-    }
-
+    .received .sender-name { color: var(--received-sender-color); }
+    .message-text { font-size: 14px; line-height: 1.4; word-break: break-word; }
+    .message-text a { color: #075e54; text-decoration: none; }
     .attachment {
       margin-top: 8px;
       background: rgba(0,0,0,0.05);
@@ -316,22 +250,17 @@
       align-items: center;
       gap: 8px;
     }
-
-    .attachment img,
-    .attachment video,
-    .attachment audio {
+    .attachment img, .attachment video, .attachment audio {
       max-width: 100%;
       max-height: 200px;
       border-radius: 8px;
     }
-
     .message-time {
       font-size: 10px;
       color: var(--time-color);
       margin-top: 5px;
       text-align: right;
     }
-
     .input-area {
       background: var(--input-area-bg);
       padding: 12px 16px;
@@ -340,7 +269,6 @@
       gap: 8px;
       border-top: 1px solid var(--border-color);
     }
-
     .input-area input {
       flex: 1;
       border: none;
@@ -350,7 +278,6 @@
       font-size: 15px;
       outline: none;
     }
-
     .input-area button {
       background: var(--send-btn-bg);
       border: none;
@@ -361,21 +288,19 @@
       cursor: pointer;
       font-size: 20px;
     }
-
     .attach-btn {
       background: var(--simulate-btn-bg);
       color: var(--simulate-btn-text);
       width: auto;
       padding: 0 12px;
     }
-
-    /* Mobile layout */
+    /* Mobile Layout */
     .mobile-layout {
+      display: none;
       height: 100%;
       width: 100%;
       position: relative;
     }
-
     .mobile-view {
       height: 100%;
       width: 100%;
@@ -384,36 +309,20 @@
       left: 0;
       background: var(--app-bg);
       transition: transform 0.3s ease;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
-
-    .mobile-view.list-view {
-      transform: translateX(0);
-    }
-
-    .mobile-view.chat-view {
-      transform: translateX(100%);
-    }
-
-    .mobile-view.active-chat {
-      transform: translateX(0);
-    }
-
-    .mobile-view.hidden-list {
-      transform: translateX(-100%);
-    }
-
+    .mobile-view.list-view { transform: translateX(0); }
+    .mobile-view.chat-view { transform: translateX(100%); }
     .mobile-header {
       background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
       padding: 14px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
       color: white;
     }
-
+    .mobile-header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
     .mobile-back-btn {
       background: transparent;
       border: none;
@@ -421,13 +330,29 @@
       font-size: 20px;
       cursor: pointer;
     }
-
     .mobile-chat-list {
       flex: 1;
       overflow-y: auto;
+      padding: 8px 0 80px 0;
     }
-
-    /* Modals */
+    .mobile-fab {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      background: var(--send-btn-bg);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
     .modal {
       display: none;
       position: fixed;
@@ -441,7 +366,6 @@
       z-index: 1000;
       backdrop-filter: blur(4px);
     }
-
     .modal-card {
       background: white;
       width: 340px;
@@ -452,20 +376,14 @@
       max-height: 85vh;
       overflow-y: auto;
     }
-
-    .modal-card h3 {
-      margin-bottom: 12px;
-    }
-
-    .modal-card input,
-    .modal-card select {
+    .modal-card h3 { margin-bottom: 12px; }
+    .modal-card input, .modal-card select {
       width: 100%;
       margin: 8px 0;
       padding: 8px 12px;
       border-radius: 40px;
       border: 1px solid #ccc;
     }
-
     .modal-card button {
       background: #075e54;
       color: white;
@@ -475,14 +393,7 @@
       margin: 5px;
       cursor: pointer;
     }
-
-    .theme-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 15px 0;
-    }
-
+    .theme-grid { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
     .theme-btn {
       background: #f0f2f5;
       border: 1px solid #ddd;
@@ -492,52 +403,32 @@
       display: flex;
       justify-content: space-between;
     }
-
     @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
-    /* Responsive: hide sidebar on mobile, show mobile layout */
     @media (max-width: 768px) {
-      .desktop-layout {
-        display: none;
-      }
-
-      .mobile-layout {
-        display: block;
-      }
+      .desktop-layout { display: none; }
+      .mobile-layout { display: block; }
     }
-
     @media (min-width: 769px) {
-      .mobile-layout {
-        display: none;
-      }
-
-      .desktop-layout {
-        display: flex;
-      }
+      .mobile-layout { display: none; }
+      .desktop-layout { display: flex; }
     }
   </style>
 </head>
 <body>
 
 <div class="whispers-app">
-  <!-- Desktop/Tablet Layout -->
+  <!-- Desktop Layout -->
   <div class="desktop-layout">
     <div class="sidebar">
       <div class="sidebar-header">
         <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
-        <p>All conversations</p>
+        <button id="desktopLogoutBtn" class="logout-icon" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="chat-list" id="desktopChatList"></div>
-      <button class="new-chat-btn" id="desktopNewChatBtn"><i class="fas fa-plus"></i> New Private Chat</button>
+      <button id="desktopFabPlus" class="fab-plus" title="New private chat"><i class="fas fa-plus"></i></button>
     </div>
     <div class="main-chat">
       <div class="chat-header" id="desktopChatHeader"></div>
@@ -555,9 +446,10 @@
     <div id="mobileListView" class="mobile-view list-view">
       <div class="mobile-header">
         <h2><i class="fab fa-whatsapp"></i> Whispers</h2>
+        <button id="mobileLogoutBtn" class="logout-icon" style="background:rgba(255,255,255,0.2);"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="mobile-chat-list" id="mobileChatList"></div>
-      <button class="new-chat-btn" id="mobileNewChatBtn"><i class="fas fa-plus"></i> New Private Chat</button>
+      <button id="mobileFabPlus" class="mobile-fab"><i class="fas fa-plus"></i></button>
     </div>
     <div id="mobileChatView" class="mobile-view chat-view">
       <div class="mobile-header">
@@ -576,7 +468,7 @@
 </div>
 
 <!-- Authentication Modal -->
-<div id="authModal" class="modal" style="display: flex;">
+<div id="authModal" class="modal">
   <div class="modal-card">
     <i class="fab fa-whatsapp" style="font-size: 40px; color:#075e54;"></i>
     <h3>Welcome to Whispers</h3>
@@ -704,18 +596,15 @@
     const desktopContainer = document.getElementById("desktopChatList");
     if(desktopContainer) {
       desktopContainer.innerHTML = "";
-      // Group chat
       let groupItem = createChatListItem('group', null, localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
       groupItem.addEventListener("click",()=>{ currentChat={type:'group',id:null}; renderActiveChatDesktop(); renderChatLists(); });
       desktopContainer.appendChild(groupItem);
-      // Private chats
       privateChats.sort((a,b)=>(b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
       privateChats.forEach(chat=>{
         let item = createChatListItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
         item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; renderActiveChatDesktop(); renderChatLists(); });
         desktopContainer.appendChild(item);
       });
-      // Highlight active
       document.querySelectorAll("#desktopChatList .chat-list-item").forEach(el => {
         let type = el.dataset.type;
         let id = el.dataset.id;
@@ -723,7 +612,6 @@
         else el.classList.remove("active");
       });
     }
-
     // Mobile list
     const mobileContainer = document.getElementById("mobileChatList");
     if(mobileContainer) {
@@ -758,7 +646,6 @@
     renderDesktopHeader();
     renderDesktopMessages();
   }
-
   function renderActiveChatMobile() {
     renderMobileHeader();
     renderMobileMessages();
@@ -802,7 +689,6 @@
     let messages = currentChat.type==='group' ? groupMessages : (privateMessages[currentChat.id] || []);
     renderMessagesCommon(container, messages);
   }
-
   function renderMobileMessages() {
     let container = document.getElementById("mobileChatMessages");
     let messages = currentChat.type==='group' ? groupMessages : (privateMessages[currentChat.id] || []);
@@ -945,7 +831,15 @@
   }
   function adminLogout() { isGroupAdmin=false; localStorage.removeItem("whispers_admin"); addSystemNotification("Admin mode deactivated.", 'group'); if(!isMobile) renderDesktopHeader(); else renderMobileHeader(); }
 
-  // ---------- AUTH ----------
+  // ---------- AUTH & LOGOUT ----------
+  function logout() {
+    localStorage.removeItem("whispers_current_user");
+    currentUser = null;
+    isGroupAdmin = false;
+    localStorage.removeItem("whispers_admin");
+    document.getElementById("authModal").style.display = "flex";
+  }
+
   function registerUser(username, password, displayName) {
     let users = JSON.parse(localStorage.getItem("whispers_users") || "{}");
     if(users[username]) return false;
@@ -993,8 +887,10 @@
     document.getElementById("mobileAttachBtn").onclick = () => attachFile(true);
     document.getElementById("mobileMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], true); });
     document.getElementById("mobileBackBtn").onclick = () => showMobileListView();
-    document.getElementById("desktopNewChatBtn").addEventListener("click", showNewChatModal);
-    document.getElementById("mobileNewChatBtn").addEventListener("click", showNewChatModal);
+    document.getElementById("desktopFabPlus").addEventListener("click", showNewChatModal);
+    document.getElementById("mobileFabPlus").addEventListener("click", showNewChatModal);
+    document.getElementById("desktopLogoutBtn").addEventListener("click", logout);
+    document.getElementById("mobileLogoutBtn").addEventListener("click", logout);
   }
 
   function showMobileChatView() {
@@ -1076,7 +972,18 @@
   }
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-  // ---------- INIT AUTH ----------
+  // ---------- INIT ----------
+  function init() {
+    const storedUser = localStorage.getItem("whispers_current_user");
+    if(storedUser) {
+      currentUser = JSON.parse(storedUser);
+      closeAuthModal();
+      startApp();
+    } else {
+      document.getElementById("authModal").style.display = "flex";
+    }
+  }
+  // Auth modal event listeners
   document.getElementById("loginTab").onclick = () => { document.getElementById("loginPanel").style.display="block"; document.getElementById("signupPanel").style.display="none"; };
   document.getElementById("signupTab").onclick = () => { document.getElementById("loginPanel").style.display="none"; document.getElementById("signupPanel").style.display="block"; };
   document.getElementById("doLoginBtn").onclick = () => {
@@ -1103,7 +1010,6 @@
   document.getElementById("authModal").addEventListener("click", e=>{ if(e.target===document.getElementById("authModal")) closeAuthModal(); });
   document.getElementById("addMemberModal").addEventListener("click", e=>{ if(e.target===document.getElementById("addMemberModal")) document.getElementById("addMemberModal").style.display="none"; });
   document.getElementById("themeModal").addEventListener("click", e=>{ if(e.target===document.getElementById("themeModal")) document.getElementById("themeModal").style.display="none"; });
-
   window.addEventListener("resize", () => {
     isMobile = window.innerWidth <= 768;
     if(isMobile) {
@@ -1113,6 +1019,7 @@
       renderActiveChatDesktop();
     }
   });
+  init();
 </script>
 </body>
 </html>
