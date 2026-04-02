@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Whispers · + Menu with New Group & File Creator</title>
+  <title>Whispers · Sky Blue Theme</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -19,30 +19,31 @@
       transition: background 0.2s;
     }
     :root {
-      --app-bg: #f0f2f5;
+      /* Sky Blue default values (will be applied by JS on load) */
+      --app-bg: #e8f4fd;
       --sidebar-bg: #ffffff;
-      --sidebar-hover: #f0f2f5;
-      --sidebar-active: #e7f3ff;
-      --header-gradient-start: #075e54;
-      --header-gradient-end: #128c7e;
+      --sidebar-hover: #e3f0fa;
+      --sidebar-active: #d4e8f5;
+      --header-gradient-start: #4a90e2;
+      --header-gradient-end: #2c6eb3;
       --header-text: white;
-      --chat-bg: #f0f2f5;
-      --chat-bg-pattern: radial-gradient(circle at 10% 30%, rgba(220,240,245,0.3) 2%, transparent 2.5%);
-      --sent-bubble: #dcf8c5;
-      --sent-bubble-text: #111;
+      --chat-bg: #e8f4fd;
+      --chat-bg-pattern: radial-gradient(circle at 10% 30%, rgba(74,144,226,0.08) 2%, transparent 2.5%);
+      --sent-bubble: #cce4f7;
+      --sent-bubble-text: #1a3c5e;
       --received-bubble: white;
-      --received-bubble-text: #1f2c3e;
-      --sender-name-color: #075e54;
-      --received-sender-color: #128c7e;
+      --received-bubble-text: #1a2a3a;
+      --sender-name-color: #4a90e2;
+      --received-sender-color: #2c6eb3;
       --input-area-bg: #ffffff;
-      --input-bg: #f3f5f7;
-      --input-border-focus: #25d36650;
-      --send-btn-bg: #075e54;
-      --send-btn-hover: #128c7e;
-      --simulate-btn-bg: #e4e6eb;
-      --simulate-btn-text: #1b2a3f;
-      --time-color: #6b6f76;
-      --border-color: #e9ecef;
+      --input-bg: #f0f8ff;
+      --input-border-focus: #4a90e2;
+      --send-btn-bg: #4a90e2;
+      --send-btn-hover: #2c6eb3;
+      --simulate-btn-bg: #e0ecf5;
+      --simulate-btn-text: #2c6eb3;
+      --time-color: #6b7b8c;
+      --border-color: #cde0ec;
     }
     body { background: var(--app-bg); }
     .whispers-app {
@@ -143,7 +144,6 @@
       text-overflow: ellipsis;
       margin-top: 2px;
     }
-    /* Floating plus button + menu */
     .fab-plus {
       position: absolute;
       bottom: 20px;
@@ -265,7 +265,7 @@
     }
     .received .sender-name { color: var(--received-sender-color); }
     .message-text { font-size: 14px; line-height: 1.4; word-break: break-word; }
-    .message-text a { color: #075e54; text-decoration: none; }
+    .message-text a { color: #4a90e2; text-decoration: none; }
     .attachment {
       margin-top: 8px;
       background: rgba(0,0,0,0.05);
@@ -411,7 +411,7 @@
     }
     .modal-card textarea { min-height: 100px; resize: vertical; }
     .modal-card button {
-      background: #075e54;
+      background: #4a90e2;
       color: white;
       border: none;
       padding: 10px 20px;
@@ -490,13 +490,13 @@
   </div>
 </div>
 
-<!-- Auth Modal (same as before) -->
+<!-- Auth Modal -->
 <div id="authModal" class="modal">
   <div class="modal-card">
-    <i class="fab fa-whatsapp" style="font-size: 40px; color:#075e54;"></i>
+    <i class="fab fa-whatsapp" style="font-size: 40px; color:#4a90e2;"></i>
     <h3>Welcome to Whispers</h3>
     <div id="authTabs" style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <button id="loginTab" style="background:#075e54;">Login</button>
+      <button id="loginTab" style="background:#4a90e2;">Login</button>
       <button id="signupTab">Sign Up</button>
     </div>
     <div id="loginPanel">
@@ -518,7 +518,7 @@
   </div>
 </div>
 
-<!-- Modals for new group and file creation -->
+<!-- New Group Modal -->
 <div id="newGroupModal" class="modal">
   <div class="modal-card">
     <h3>Create New Group</h3>
@@ -529,6 +529,7 @@
   </div>
 </div>
 
+<!-- Create File Modal -->
 <div id="createFileModal" class="modal">
   <div class="modal-card">
     <h3>Create New Text File</h3>
@@ -539,21 +540,21 @@
   </div>
 </div>
 
-<!-- Admin & Member Modals (same) -->
+<!-- Admin & Member Modals -->
 <div id="addMemberModal" class="modal"><div class="modal-card"><h3>Add Group Member</h3><input type="text" id="newMemberName"><button id="confirmAddMemberBtn">Add</button><button id="closeAddMemberBtn">Cancel</button></div></div>
 <div id="themeModal" class="modal"><div class="modal-card"><h3>Themes</h3><div id="themeListContainer"></div><button id="closeThemeModal">Close</button></div></div>
 
 <script>
   // ---------- DATA MODELS ----------
   let currentUser = null;
-  let groupMessages = [];           // main group messages
-  let customGroups = [];            // { id, name, members: [userIds], messages: [], createdAt }
+  let groupMessages = [];
+  let customGroups = [];
   let privateMessages = {};
   let privateChats = [];
-  let groupMembers = [];             // global user list (for main group and private)
-  let currentChat = { type: 'group', id: 'main' }; // 'group' with id 'main' or custom group id, or 'private'
-  let isGroupAdmin = false;          // only for main group
-  let currentThemeId = "light";
+  let groupMembers = [];
+  let currentChat = { type: 'group', id: 'main' };
+  let isGroupAdmin = false;
+  let currentThemeId = "skyblue";
   let isMobile = window.innerWidth <= 768;
 
   const DEFAULT_MEMBERS = [
@@ -563,10 +564,83 @@
     { id: "riley", name: "Riley" }
   ];
 
-  // ---------- THEME SYSTEM (simplified, same as before) ----------
+  // ---------- THEME SYSTEM (Sky Blue as default) ----------
   const builtinThemes = {
-    light: { name: "☀️ Light", vars: { '--app-bg': '#f0f2f5', '--sidebar-bg': '#ffffff', '--sidebar-hover': '#f0f2f5', '--sidebar-active': '#e7f3ff', '--header-gradient-start': '#075e54', '--header-gradient-end': '#128c7e', '--chat-bg': '#f0f2f5', '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(220,240,245,0.3) 2%, transparent 2.5%)', '--sent-bubble': '#dcf8c5', '--sent-bubble-text': '#111', '--received-bubble': 'white', '--received-bubble-text': '#1f2c3e', '--sender-name-color': '#075e54', '--received-sender-color': '#128c7e', '--input-area-bg': '#ffffff', '--input-bg': '#f3f5f7', '--input-border-focus': '#25d36650', '--send-btn-bg': '#075e54', '--send-btn-hover': '#128c7e', '--simulate-btn-bg': '#e4e6eb', '--simulate-btn-text': '#1b2a3f', '--time-color': '#6b6f76', '--border-color': '#e9ecef' } },
-    dark: { name: "🌙 Dark", vars: { '--app-bg': '#1e1e2f', '--sidebar-bg': '#2a2a3a', '--sidebar-hover': '#35354a', '--sidebar-active': '#2d3b66', '--header-gradient-start': '#0a2f2a', '--header-gradient-end': '#1f4e46', '--chat-bg': '#1a1a2a', '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(90,120,120,0.1) 2%, transparent 2.5%)', '--sent-bubble': '#2a5e5a', '--sent-bubble-text': '#f0f0f0', '--received-bubble': '#2d2d3a', '--received-bubble-text': '#e0e0e0', '--sender-name-color': '#6fbfb0', '--received-sender-color': '#68b8a8', '--input-area-bg': '#232332', '--input-bg': '#2e2e42', '--input-border-focus': '#2ecc71', '--send-btn-bg': '#1f8a7a', '--send-btn-hover': '#2aa090', '--simulate-btn-bg': '#35354a', '--simulate-btn-text': '#e2e2e2', '--time-color': '#a0a0b0', '--border-color': '#35354a' } }
+    skyblue: { name: "☁️ Sky Blue", vars: {
+        '--app-bg': '#e8f4fd',
+        '--sidebar-bg': '#ffffff',
+        '--sidebar-hover': '#e3f0fa',
+        '--sidebar-active': '#d4e8f5',
+        '--header-gradient-start': '#4a90e2',
+        '--header-gradient-end': '#2c6eb3',
+        '--chat-bg': '#e8f4fd',
+        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(74,144,226,0.08) 2%, transparent 2.5%)',
+        '--sent-bubble': '#cce4f7',
+        '--sent-bubble-text': '#1a3c5e',
+        '--received-bubble': 'white',
+        '--received-bubble-text': '#1a2a3a',
+        '--sender-name-color': '#4a90e2',
+        '--received-sender-color': '#2c6eb3',
+        '--input-area-bg': '#ffffff',
+        '--input-bg': '#f0f8ff',
+        '--input-border-focus': '#4a90e2',
+        '--send-btn-bg': '#4a90e2',
+        '--send-btn-hover': '#2c6eb3',
+        '--simulate-btn-bg': '#e0ecf5',
+        '--simulate-btn-text': '#2c6eb3',
+        '--time-color': '#6b7b8c',
+        '--border-color': '#cde0ec'
+      } },
+    light: { name: "☀️ Light", vars: {
+        '--app-bg': '#f0f2f5',
+        '--sidebar-bg': '#ffffff',
+        '--sidebar-hover': '#f0f2f5',
+        '--sidebar-active': '#e7f3ff',
+        '--header-gradient-start': '#075e54',
+        '--header-gradient-end': '#128c7e',
+        '--chat-bg': '#f0f2f5',
+        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(220,240,245,0.3) 2%, transparent 2.5%)',
+        '--sent-bubble': '#dcf8c5',
+        '--sent-bubble-text': '#111',
+        '--received-bubble': 'white',
+        '--received-bubble-text': '#1f2c3e',
+        '--sender-name-color': '#075e54',
+        '--received-sender-color': '#128c7e',
+        '--input-area-bg': '#ffffff',
+        '--input-bg': '#f3f5f7',
+        '--input-border-focus': '#25d36650',
+        '--send-btn-bg': '#075e54',
+        '--send-btn-hover': '#128c7e',
+        '--simulate-btn-bg': '#e4e6eb',
+        '--simulate-btn-text': '#1b2a3f',
+        '--time-color': '#6b6f76',
+        '--border-color': '#e9ecef'
+      } },
+    dark: { name: "🌙 Dark", vars: {
+        '--app-bg': '#1e1e2f',
+        '--sidebar-bg': '#2a2a3a',
+        '--sidebar-hover': '#35354a',
+        '--sidebar-active': '#2d3b66',
+        '--header-gradient-start': '#0a2f2a',
+        '--header-gradient-end': '#1f4e46',
+        '--chat-bg': '#1a1a2a',
+        '--chat-bg-pattern': 'radial-gradient(circle at 10% 30%, rgba(90,120,120,0.1) 2%, transparent 2.5%)',
+        '--sent-bubble': '#2a5e5a',
+        '--sent-bubble-text': '#f0f0f0',
+        '--received-bubble': '#2d2d3a',
+        '--received-bubble-text': '#e0e0e0',
+        '--sender-name-color': '#6fbfb0',
+        '--received-sender-color': '#68b8a8',
+        '--input-area-bg': '#232332',
+        '--input-bg': '#2e2e42',
+        '--input-border-focus': '#2ecc71',
+        '--send-btn-bg': '#1f8a7a',
+        '--send-btn-hover': '#2aa090',
+        '--simulate-btn-bg': '#35354a',
+        '--simulate-btn-text': '#e2e2e2',
+        '--time-color': '#a0a0b0',
+        '--border-color': '#35354a'
+      } }
   };
   let customThemes = [];
   function applyThemeById(id) {
@@ -577,7 +651,11 @@
     currentThemeId = id;
     localStorage.setItem("whispers_theme", id);
   }
-  function loadTheme() { let saved = localStorage.getItem("whispers_theme"); if(saved && (builtinThemes[saved]||customThemes.some(t=>t.id===saved))) applyThemeById(saved); else applyThemeById("light"); }
+  function loadTheme() {
+    let saved = localStorage.getItem("whispers_theme");
+    if(saved && (builtinThemes[saved]||customThemes.some(t=>t.id===saved))) applyThemeById(saved);
+    else applyThemeById("skyblue"); // default to skyblue
+  }
 
   // ---------- DATA PERSISTENCE ----------
   function loadData() {
@@ -628,32 +706,28 @@
     renderChatLists();
   }
 
-  // ---------- RENDERING CHAT LIST (main group + custom groups + private) ----------
+  // ---------- RENDERING CHAT LIST ----------
   function renderChatLists() {
     const desktopContainer = document.getElementById("desktopChatList");
     const mobileContainer = document.getElementById("mobileChatList");
     const renderTo = (container, isDesktop) => {
       if(!container) return;
       container.innerHTML = "";
-      // Main group
       let mainItem = createChatListItem('group', 'main', localStorage.getItem("whispers_groupName"), groupMessages[groupMessages.length-1]?.text || "No messages");
       mainItem.addEventListener("click",()=>{ currentChat={type:'group', id:'main'}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
       container.appendChild(mainItem);
-      // Custom groups
       customGroups.forEach(grp=>{
         let lastMsg = grp.messages.length ? grp.messages[grp.messages.length-1].text : "No messages";
         let item = createChatListItem('group', grp.id, grp.name, lastMsg);
         item.addEventListener("click",()=>{ currentChat={type:'group', id:grp.id}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
         container.appendChild(item);
       });
-      // Private chats
       privateChats.sort((a,b)=>(b.lastTimestamp||"").localeCompare(a.lastTimestamp||""));
       privateChats.forEach(chat=>{
         let item = createChatListItem('private', chat.userId, chat.name, chat.lastMessage || "Start chatting");
         item.addEventListener("click",()=>{ currentChat={type:'private', id:chat.userId}; if(isDesktop) renderActiveChatDesktop(); else { showMobileChatView(); renderActiveChatMobile(); } renderChatLists(); });
         container.appendChild(item);
       });
-      // Highlight active
       container.querySelectorAll(".chat-list-item").forEach(el => {
         let type = el.dataset.type;
         let id = el.dataset.id;
@@ -681,7 +755,6 @@
     return div;
   }
 
-  // ---------- RENDER ACTIVE CHAT ----------
   function getCurrentMessages() {
     if(currentChat.type==='group') {
       if(currentChat.id==='main') return groupMessages;
@@ -847,7 +920,7 @@
     input.click();
   }
 
-  // ---------- NEW GROUP CREATION ----------
+  // ---------- NEW GROUP & FILE CREATION ----------
   function showNewGroupModal() {
     const container = document.getElementById("membersListForGroup");
     container.innerHTML = "";
@@ -866,7 +939,6 @@
     let selected = [];
     document.querySelectorAll("#membersListForGroup input:checked").forEach(cb => selected.push(cb.value));
     if(selected.length===0) { alert("Select at least one member"); return; }
-    // include current user automatically
     if(!selected.includes(currentUser.username)) selected.push(currentUser.username);
     let newId = "group_" + Date.now();
     let newGroup = {
@@ -886,7 +958,6 @@
     document.getElementById("groupNameInput").value = "";
   }
 
-  // ---------- CREATE TEXT FILE & ATTACH ----------
   function showCreateFileModal() {
     document.getElementById("fileNameInput").value = "document.txt";
     document.getElementById("fileContentInput").value = "";
@@ -1000,7 +1071,6 @@
       currentChat = { type: 'group', id: 'main' };
       renderActiveChatDesktop();
     }
-    // Event listeners
     document.getElementById("desktopSendBtn").onclick = () => sendMessageWithAttachments(document.getElementById("desktopMessageInput").value, [], false);
     document.getElementById("desktopAttachBtn").onclick = () => attachFile(false);
     document.getElementById("desktopMessageInput").addEventListener("keypress", e => { if(e.key==="Enter") sendMessageWithAttachments(e.target.value, [], false); });
@@ -1051,7 +1121,7 @@
     modal.style.display = "flex";
   }
 
-  // Theme modal (simplified)
+  // Theme modal
   function openThemeModal() { if(!isGroupAdmin) return; renderThemeModal(); document.getElementById("themeModal").style.display="flex"; }
   function renderThemeModal() {
     let container = document.getElementById("themeListContainer");
@@ -1068,7 +1138,7 @@
       btn.className = `theme-btn ${currentThemeId===c.id?'active':''}`;
       btn.innerHTML = `<span>🎨 ${c.name}</span><button class="delete-theme">🗑️</button>`;
       btn.onclick = (e) => { if(e.target.tagName!='BUTTON') applyThemeById(c.id); };
-      btn.querySelector(".delete-theme").onclick = (e) => { e.stopPropagation(); customThemes=customThemes.filter(t=>t.id!==c.id); localStorage.setItem("whispers_custom_themes",JSON.stringify(customThemes)); if(currentThemeId===c.id) applyThemeById("light"); renderThemeModal(); };
+      btn.querySelector(".delete-theme").onclick = (e) => { e.stopPropagation(); customThemes=customThemes.filter(t=>t.id!==c.id); localStorage.setItem("whispers_custom_themes",JSON.stringify(customThemes)); if(currentThemeId===c.id) applyThemeById("skyblue"); renderThemeModal(); };
       container.appendChild(btn);
     });
     let newBtn = document.createElement("div");
