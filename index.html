@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Fixed Buttons</title>
+  <title>Whispers · Email Auth Only</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -449,7 +449,7 @@
   </div>
 </div>
 
-<!-- Auth Modal -->
+<!-- Auth Modal (Email/Password only) -->
 <div id="authModal" class="modal" style="display: flex;">
   <div class="modal-card">
     <i class="fab fa-whatsapp" style="font-size: 40px; color:#4a90e2;"></i>
@@ -459,17 +459,13 @@
       <button id="signupTab">Sign Up</button>
     </div>
     <div id="loginPanel">
-      <input type="email" id="loginUsername" placeholder="Email">
-      <input type="password" id="loginPassword" placeholder="Password">
+      <input type="email" id="loginUsername" placeholder="Email" autocomplete="email">
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
       <button id="doLoginBtn">Login</button>
-      <div style="margin-top: 15px;"><hr><p>Federated Login</p>
-        <button id="googleLoginBtn" style="background:#db4437;"><i class="fab fa-google"></i> Google</button>
-        <button id="facebookLoginBtn" style="background:#4267B2;"><i class="fab fa-facebook"></i> Facebook</button>
-      </div>
     </div>
     <div id="signupPanel" style="display:none;">
-      <input type="email" id="signupUsername" placeholder="Email">
-      <input type="password" id="signupPassword" placeholder="Password">
+      <input type="email" id="signupUsername" placeholder="Email" autocomplete="email">
+      <input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password">
       <input type="text" id="signupDisplayName" placeholder="Display Name">
       <button id="doSignupBtn">Create Account</button>
     </div>
@@ -480,7 +476,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, query, orderBy, serverTimestamp, setDoc, getDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -1060,7 +1056,7 @@
     } else {
       await loadActiveChatDesktop();
     }
-    // Attach event listeners (ensuring they are not duplicated)
+    // Attach event listeners
     desktopSend.onclick = async () => {
       if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) {
         alert('You are muted in this group.');
@@ -1096,7 +1092,7 @@
     }
   });
 
-  // Auth Modal UI Handlers
+  // Auth Modal UI Handlers (email/password only)
   document.getElementById('loginTab').onclick = () => { document.getElementById('loginPanel').style.display = 'block'; document.getElementById('signupPanel').style.display = 'none'; };
   document.getElementById('signupTab').onclick = () => { document.getElementById('loginPanel').style.display = 'none'; document.getElementById('signupPanel').style.display = 'block'; };
   document.getElementById('doLoginBtn').onclick = async () => {
@@ -1114,18 +1110,6 @@
       const cred = await createUserWithEmailAndPassword(auth, email, pwd);
       await updateProfile(cred.user, { displayName: name });
       await setDoc(doc(db, 'users', cred.user.uid), { displayName: name, email, online: true, lastSeen: serverTimestamp() });
-    } catch (err) { document.getElementById('authError').innerText = err.message; }
-  };
-  document.getElementById('googleLoginBtn').onclick = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) { document.getElementById('authError').innerText = err.message; }
-  };
-  document.getElementById('facebookLoginBtn').onclick = async () => {
-    const provider = new FacebookAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
     } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
   document.getElementById('closeModalBtn').onclick = () => document.getElementById('authModal').style.display = 'none';
