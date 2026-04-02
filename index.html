@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Real‑time Firebase</title>
+  <title>Whispers · Fixed Buttons</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -459,7 +459,7 @@
       <button id="signupTab">Sign Up</button>
     </div>
     <div id="loginPanel">
-      <input type="text" id="loginUsername" placeholder="Email">
+      <input type="email" id="loginUsername" placeholder="Email">
       <input type="password" id="loginPassword" placeholder="Password">
       <button id="doLoginBtn">Login</button>
       <div style="margin-top: 15px;"><hr><p>Federated Login</p>
@@ -468,7 +468,7 @@
       </div>
     </div>
     <div id="signupPanel" style="display:none;">
-      <input type="text" id="signupUsername" placeholder="Email">
+      <input type="email" id="signupUsername" placeholder="Email">
       <input type="password" id="signupPassword" placeholder="Password">
       <input type="text" id="signupDisplayName" placeholder="Display Name">
       <button id="doSignupBtn">Create Account</button>
@@ -484,7 +484,6 @@
   import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, query, orderBy, serverTimestamp, setDoc, getDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-  // Firebase Config (provided)
   const firebaseConfig = {
     apiKey: "AIzaSyAmgvzZju_GbPdUDDHqFg4AN54xnJ4LwW8",
     authDomain: "whispers-4d04e.firebaseapp.com",
@@ -596,7 +595,6 @@
         const ids = [currentUser.uid, currentChat.id].sort();
         const convId = ids.join('_');
         await addDoc(collection(db, 'privateMessages', convId, 'messages'), msg);
-        // update previews
         await setDoc(doc(db, 'privateChats', currentUser.uid), {
           [currentChat.id]: { lastMessage: text || (attachments[0]?.name || 'Attachment'), timestamp: serverTimestamp() }
         }, { merge: true });
@@ -670,20 +668,20 @@
         container.innerHTML = '';
         // Main group
         const mainItem = createChatItem('group', 'main', 'Whispers Squad', '');
-        mainItem.addEventListener('click', () => {
+        mainItem.onclick = () => {
           currentChat = { type: 'group', id: 'main' };
           if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
           renderChatList();
-        });
+        };
         container.appendChild(mainItem);
         // Custom groups
         for (const grp of myGroups) {
           const item = createChatItem('group', grp.id, grp.name, '');
-          item.addEventListener('click', () => {
+          item.onclick = () => {
             currentChat = { type: 'group', id: grp.id };
             if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
             renderChatList();
-          });
+          };
           container.appendChild(item);
         }
         // Private chats
@@ -692,11 +690,11 @@
             const userSnap = await getDoc(doc(db, 'users', otherId));
             const name = userSnap.exists() ? (userSnap.data().displayName || otherId) : otherId;
             const item = createChatItem('private', otherId, name, data.lastMessage || '');
-            item.addEventListener('click', () => {
+            item.onclick = () => {
               currentChat = { type: 'private', id: otherId };
               if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
               renderChatList();
-            });
+            };
             container.appendChild(item);
           })();
         }
@@ -1062,7 +1060,7 @@
     } else {
       await loadActiveChatDesktop();
     }
-    // Attach event listeners (ensure they are not duplicated)
+    // Attach event listeners (ensuring they are not duplicated)
     desktopSend.onclick = async () => {
       if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) {
         alert('You are muted in this group.');
@@ -1120,11 +1118,15 @@
   };
   document.getElementById('googleLoginBtn').onclick = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
   document.getElementById('facebookLoginBtn').onclick = async () => {
     const provider = new FacebookAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
   document.getElementById('closeModalBtn').onclick = () => document.getElementById('authModal').style.display = 'none';
   window.addEventListener('resize', () => {
