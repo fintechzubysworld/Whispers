@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Email Auth Only</title>
+  <title>Whispers · Email Auth Only · All Features Working</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ========== FULL STYLES (same as before) ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -459,13 +460,13 @@
       <button id="signupTab">Sign Up</button>
     </div>
     <div id="loginPanel">
-      <input type="email" id="loginUsername" placeholder="Email" autocomplete="email">
-      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+      <input type="email" id="loginUsername" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
       <button id="doLoginBtn">Login</button>
     </div>
     <div id="signupPanel" style="display:none;">
-      <input type="email" id="signupUsername" placeholder="Email" autocomplete="email">
-      <input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password">
+      <input type="email" id="signupUsername" placeholder="Email">
+      <input type="password" id="signupPassword" placeholder="Password">
       <input type="text" id="signupDisplayName" placeholder="Display Name">
       <button id="doSignupBtn">Create Account</button>
     </div>
@@ -524,36 +525,35 @@
   const desktopLogout = document.getElementById('desktopLogoutBtn');
   const mobileLogout = document.getElementById('mobileLogoutBtn');
 
-  // Helper: escape HTML
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-  // Online status
+  // ---------- User & Online ----------
+  async function ensureUserDocument(user) {
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await setDoc(userRef, { displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: serverTimestamp() });
+    } else {
+      await updateDoc(userRef, { online: true, lastSeen: serverTimestamp() });
+    }
+  }
   async function setOnline(userId, status) {
-    try {
-      await updateDoc(doc(db, 'users', userId), { online: status, lastSeen: serverTimestamp() });
-    } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'users', userId), { online: status, lastSeen: serverTimestamp() }); } catch(e) { console.warn(e); }
   }
   function startHeartbeat() {
     if (onlineInterval) clearInterval(onlineInterval);
-    onlineInterval = setInterval(async () => {
-      if (currentUser) await setOnline(currentUser.uid, true);
-    }, 30000);
-    window.addEventListener('beforeunload', () => {
-      if (currentUser) setOnline(currentUser.uid, false);
-    });
+    onlineInterval = setInterval(async () => { if (currentUser) await setOnline(currentUser.uid, true); }, 30000);
+    window.addEventListener('beforeunload', () => { if (currentUser) setOnline(currentUser.uid, false); });
   }
 
-  // Typing indicators
+  // ---------- Typing ----------
   async function setTyping(chatType, chatId, isTyping) {
     if (!currentUser) return;
     const typingRef = doc(db, 'typingIndicators', `${chatType}_${chatId}`);
     try {
-      if (isTyping) {
-        await setDoc(typingRef, { [currentUser.uid]: true, updatedAt: serverTimestamp() }, { merge: true });
-      } else {
-        await updateDoc(typingRef, { [currentUser.uid]: false });
-      }
-    } catch (e) { console.error(e); }
+      if (isTyping) await setDoc(typingRef, { [currentUser.uid]: true, updatedAt: serverTimestamp() }, { merge: true });
+      else await updateDoc(typingRef, { [currentUser.uid]: false });
+    } catch(e) { console.warn(e); }
   }
   function listenTyping(chatType, chatId, callback) {
     const ref = doc(db, 'typingIndicators', `${chatType}_${chatId}`);
@@ -562,18 +562,18 @@
         const data = snap.data();
         const typingUsers = Object.keys(data).filter(k => k !== 'updatedAt' && data[k] === true && k !== currentUser?.uid);
         callback(typingUsers);
-      } else { callback([]); }
+      } else callback([]);
     }, (err) => console.error(err));
   }
 
-  // Upload file
+  // ---------- File Upload ----------
   async function uploadFile(file) {
     const fileRef = ref(storage, `attachments/${Date.now()}_${file.name}`);
     await uploadBytes(fileRef, file);
     return await getDownloadURL(fileRef);
   }
 
-  // Send message
+  // ---------- Send Message ----------
   async function sendMessage(text, attachments, isMobileDevice) {
     if (!text.trim() && attachments.length === 0) return;
     const msg = {
@@ -591,54 +591,31 @@
         const ids = [currentUser.uid, currentChat.id].sort();
         const convId = ids.join('_');
         await addDoc(collection(db, 'privateMessages', convId, 'messages'), msg);
-        await setDoc(doc(db, 'privateChats', currentUser.uid), {
-          [currentChat.id]: { lastMessage: text || (attachments[0]?.name || 'Attachment'), timestamp: serverTimestamp() }
-        }, { merge: true });
-        await setDoc(doc(db, 'privateChats', currentChat.id), {
-          [currentUser.uid]: { lastMessage: text || (attachments[0]?.name || 'Attachment'), timestamp: serverTimestamp() }
-        }, { merge: true });
+        await setDoc(doc(db, 'privateChats', currentUser.uid), { [currentChat.id]: { lastMessage: text || (attachments[0]?.name || 'Attachment'), timestamp: serverTimestamp() } }, { merge: true });
+        await setDoc(doc(db, 'privateChats', currentChat.id), { [currentUser.uid]: { lastMessage: text || (attachments[0]?.name || 'Attachment'), timestamp: serverTimestamp() } }, { merge: true });
       }
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error(e); }
     if (isMobileDevice) mobileInput.value = '';
     else desktopInput.value = '';
   }
 
-  // Check if muted
+  // ---------- Group Utils ----------
   async function isMuted(groupId, userId) {
     try {
-      const groupRef = doc(db, 'groups', groupId);
-      const snap = await getDoc(groupRef);
-      if (snap.exists()) {
-        const muted = snap.data().muted || [];
-        return muted.includes(userId);
-      }
-    } catch (e) { console.error(e); }
-    return false;
+      const snap = await getDoc(doc(db, 'groups', groupId));
+      return snap.exists() ? (snap.data().muted || []).includes(userId) : false;
+    } catch(e) { return false; }
   }
-
-  // Kick / Mute
-  async function kickMember(groupId, userId) {
-    await updateDoc(doc(db, 'groups', groupId), { members: arrayRemove(userId), muted: arrayRemove(userId) });
-  }
+  async function kickMember(groupId, userId) { await updateDoc(doc(db, 'groups', groupId), { members: arrayRemove(userId), muted: arrayRemove(userId) }); }
   async function toggleMute(groupId, userId, mute) {
     if (mute) await updateDoc(doc(db, 'groups', groupId), { muted: arrayUnion(userId) });
     else await updateDoc(doc(db, 'groups', groupId), { muted: arrayRemove(userId) });
   }
-
-  // Create new group
   async function createGroup(name, memberIds) {
     const groupRef = doc(collection(db, 'groups'));
-    await setDoc(groupRef, {
-      name,
-      members: [currentUser.uid, ...memberIds],
-      admins: [currentUser.uid],
-      muted: [],
-      createdAt: serverTimestamp()
-    });
+    await setDoc(groupRef, { name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], muted: [], createdAt: serverTimestamp() });
     return groupRef.id;
   }
-
-  // Start private chat
   async function startPrivateChat(otherUserId) {
     await setDoc(doc(db, 'privateChats', currentUser.uid), { [otherUserId]: { lastMessage: '', timestamp: serverTimestamp() } }, { merge: true });
     await setDoc(doc(db, 'privateChats', otherUserId), { [currentUser.uid]: { lastMessage: '', timestamp: serverTimestamp() } }, { merge: true });
@@ -650,54 +627,34 @@
     try {
       const groupsSnap = await getDocs(collection(db, 'groups'));
       const myGroups = [];
-      groupsSnap.forEach(doc => {
-        const data = doc.data();
-        if (data.members && data.members.includes(currentUser.uid)) {
-          myGroups.push({ id: doc.id, ...data });
-        }
-      });
+      groupsSnap.forEach(doc => { const data = doc.data(); if (data.members && data.members.includes(currentUser.uid)) myGroups.push({ id: doc.id, ...data }); });
       const privateChatsSnap = await getDoc(doc(db, 'privateChats', currentUser.uid));
       const privateChats = privateChatsSnap.exists() ? privateChatsSnap.data() : {};
 
       const render = (container, isDesktop) => {
         if (!container) return;
         container.innerHTML = '';
-        // Main group
         const mainItem = createChatItem('group', 'main', 'Whispers Squad', '');
-        mainItem.onclick = () => {
-          currentChat = { type: 'group', id: 'main' };
-          if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
-          renderChatList();
-        };
+        mainItem.onclick = () => { currentChat = { type: 'group', id: 'main' }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
         container.appendChild(mainItem);
-        // Custom groups
         for (const grp of myGroups) {
           const item = createChatItem('group', grp.id, grp.name, '');
-          item.onclick = () => {
-            currentChat = { type: 'group', id: grp.id };
-            if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
-            renderChatList();
-          };
+          item.onclick = () => { currentChat = { type: 'group', id: grp.id }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
           container.appendChild(item);
         }
-        // Private chats
         for (const [otherId, data] of Object.entries(privateChats)) {
           (async () => {
             const userSnap = await getDoc(doc(db, 'users', otherId));
             const name = userSnap.exists() ? (userSnap.data().displayName || otherId) : otherId;
             const item = createChatItem('private', otherId, name, data.lastMessage || '');
-            item.onclick = () => {
-              currentChat = { type: 'private', id: otherId };
-              if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); }
-              renderChatList();
-            };
+            item.onclick = () => { currentChat = { type: 'private', id: otherId }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
             container.appendChild(item);
           })();
         }
       };
       render(desktopChatList, true);
       render(mobileChatList, false);
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error(e); }
   }
 
   function createChatItem(type, id, name, preview) {
@@ -706,21 +663,13 @@
     div.dataset.type = type;
     div.dataset.id = id;
     const icon = type === 'group' ? 'fas fa-users' : 'fas fa-user';
-    div.innerHTML = `<div class="chat-avatar"><i class="${icon}"></i></div>
-      <div class="chat-info"><div class="chat-name">${escapeHtml(name)}</div>
-      <div class="chat-preview">${escapeHtml(preview.substring(0, 40))}</div></div>`;
+    div.innerHTML = `<div class="chat-avatar"><i class="${icon}"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}</div><div class="chat-preview">${escapeHtml(preview.substring(0,40))}</div></div>`;
     return div;
   }
 
   // ---------- Active Chat ----------
-  async function loadActiveChatDesktop() {
-    await renderDesktopHeader();
-    await loadMessages();
-  }
-  async function loadActiveChatMobile() {
-    await renderMobileHeader();
-    await loadMessages();
-  }
+  async function loadActiveChatDesktop() { await renderDesktopHeader(); await loadMessages(); }
+  async function loadActiveChatMobile() { await renderMobileHeader(); await loadMessages(); }
 
   async function loadMessages() {
     if (messagesUnsub) messagesUnsub();
@@ -735,19 +684,14 @@
     }
     messagesUnsub = onSnapshot(messagesRef, (snap) => {
       const msgs = [];
-      snap.forEach(doc => {
-        const data = doc.data();
-        msgs.push({ id: doc.id, ...data, isSelf: data.senderId === currentUser.uid });
-      });
+      snap.forEach(doc => { const data = doc.data(); msgs.push({ id: doc.id, ...data, isSelf: data.senderId === currentUser.uid }); });
       renderMessages(msgs);
     }, (err) => console.error(err));
     if (typingUnsub) typingUnsub();
     const typingId = currentChat.type === 'group' ? (currentChat.id === 'main' ? 'main' : currentChat.id) : `private_${currentChat.id}`;
     typingUnsub = listenTyping(currentChat.type, typingId, (users) => {
       const typingDiv = document.getElementById('typingIndicator');
-      if (typingDiv) {
-        typingDiv.innerText = users.length ? `${users.length} ${users.length === 1 ? 'person is' : 'people are'} typing...` : '';
-      }
+      if (typingDiv) typingDiv.innerText = users.length ? `${users.length} ${users.length === 1 ? 'person is' : 'people are'} typing...` : '';
     });
   }
 
@@ -799,23 +743,14 @@
     let title = '';
     if (currentChat.type === 'group') {
       if (currentChat.id === 'main') title = 'Whispers Squad';
-      else {
-        const snap = await getDoc(doc(db, 'groups', currentChat.id));
-        title = snap.exists() ? snap.data().name : 'Group';
-      }
+      else { const snap = await getDoc(doc(db, 'groups', currentChat.id)); title = snap.exists() ? snap.data().name : 'Group'; }
     } else {
       const snap = await getDoc(doc(db, 'users', currentChat.id));
       title = snap.exists() ? (snap.data().displayName || currentChat.id) : currentChat.id;
     }
     desktopHeader.innerHTML = `
-      <div class="chat-title">
-        <i class="${currentChat.type === 'group' ? 'fas fa-users' : 'fas fa-user'}"></i>
-        ${escapeHtml(title)}
-        <span class="chat-subtitle">${currentChat.type === 'group' ? 'Group Chat' : 'Private Chat'}</span>
-      </div>
-      <div class="admin-controls">
-        ${currentChat.type === 'group' ? `<button class="btn-icon" id="desktopManageBtn"><i class="fas fa-cog"></i></button>` : ''}
-      </div>
+      <div class="chat-title"><i class="${currentChat.type === 'group' ? 'fas fa-users' : 'fas fa-user'}"></i> ${escapeHtml(title)} <span class="chat-subtitle">${currentChat.type === 'group' ? 'Group Chat' : 'Private Chat'}</span></div>
+      <div class="admin-controls">${currentChat.type === 'group' ? `<button class="btn-icon" id="desktopManageBtn"><i class="fas fa-cog"></i></button>` : ''}</div>
     `;
     if (currentChat.type === 'group') {
       const btn = document.getElementById('desktopManageBtn');
@@ -827,10 +762,7 @@
     let title = '';
     if (currentChat.type === 'group') {
       if (currentChat.id === 'main') title = 'Whispers Squad';
-      else {
-        const snap = await getDoc(doc(db, 'groups', currentChat.id));
-        title = snap.exists() ? snap.data().name : 'Group';
-      }
+      else { const snap = await getDoc(doc(db, 'groups', currentChat.id)); title = snap.exists() ? snap.data().name : 'Group'; }
     } else {
       const snap = await getDoc(doc(db, 'users', currentChat.id));
       title = snap.exists() ? (snap.data().displayName || currentChat.id) : currentChat.id;
@@ -866,22 +798,14 @@
         row.innerHTML = `<span>${escapeHtml(m.name)} ${m.isMuted ? '(Muted)' : ''}</span>
           <div><button class="kickBtn" data-uid="${m.uid}" style="background:#e74c3c; color:white; border:none; border-radius:20px; padding:4px 8px; margin:0 4px; cursor:pointer;">Kick</button>
           <button class="muteBtn" data-uid="${m.uid}" style="background:#f39c12; color:white; border:none; border-radius:20px; padding:4px 8px; cursor:pointer;">${m.isMuted ? 'Unmute' : 'Mute'}</button></div>`;
-        row.querySelector('.kickBtn').onclick = async () => {
-          if (confirm(`Kick ${m.name}?`)) {
-            await kickMember(groupId, m.uid);
-            modal.remove();
-          }
-        };
-        row.querySelector('.muteBtn').onclick = async () => {
-          await toggleMute(groupId, m.uid, !m.isMuted);
-          modal.remove();
-        };
+        row.querySelector('.kickBtn').onclick = async () => { if (confirm(`Kick ${m.name}?`)) { await kickMember(groupId, m.uid); modal.remove(); } };
+        row.querySelector('.muteBtn').onclick = async () => { await toggleMute(groupId, m.uid, !m.isMuted); modal.remove(); };
         listDiv.appendChild(row);
       }
       modal.querySelector('#closeGroupModalBtn').onclick = () => modal.remove();
       document.body.appendChild(modal);
       modal.style.display = 'flex';
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error(e); }
   }
 
   // ---------- Plus Menu ----------
@@ -898,12 +822,7 @@
     const fab = isDesktop ? desktopFab : mobileFab;
     fab.parentNode.appendChild(menu);
     activeMenu = menu;
-    const close = (e) => {
-      if (activeMenu && !activeMenu.contains(e.target) && e.target !== fab) {
-        activeMenu.remove(); activeMenu = null;
-        document.removeEventListener('click', close);
-      }
-    };
+    const close = (e) => { if (activeMenu && !activeMenu.contains(e.target) && e.target !== fab) { activeMenu.remove(); activeMenu = null; document.removeEventListener('click', close); } };
     setTimeout(() => document.addEventListener('click', close), 0);
     document.getElementById('menuNewPrivate').onclick = () => { activeMenu?.remove(); activeMenu = null; showNewPrivateChatModal(); };
     document.getElementById('menuNewGroup').onclick = () => { activeMenu?.remove(); activeMenu = null; showNewGroupModal(); };
@@ -913,9 +832,7 @@
   async function showNewPrivateChatModal() {
     const usersSnap = await getDocs(collection(db, 'users'));
     const users = [];
-    usersSnap.forEach(doc => {
-      if (doc.id !== currentUser.uid) users.push({ id: doc.id, name: doc.data().displayName || doc.id });
-    });
+    usersSnap.forEach(doc => { if (doc.id !== currentUser.uid) users.push({ id: doc.id, name: doc.data().displayName || doc.id }); });
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.innerHTML = `<div class="modal-card"><h3>Start Private Chat</h3><div id="userList"></div><button id="cancelPrivateBtn">Cancel</button></div>`;
@@ -942,9 +859,7 @@
   async function showNewGroupModal() {
     const usersSnap = await getDocs(collection(db, 'users'));
     const users = [];
-    usersSnap.forEach(doc => {
-      if (doc.id !== currentUser.uid) users.push({ id: doc.id, name: doc.data().displayName || doc.id });
-    });
+    usersSnap.forEach(doc => { if (doc.id !== currentUser.uid) users.push({ id: doc.id, name: doc.data().displayName || doc.id }); });
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.innerHTML = `<div class="modal-card"><h3>Create New Group</h3><input type="text" id="groupName" placeholder="Group Name"><div id="membersList"></div><button id="createGroupBtn">Create</button><button id="cancelGroupBtn">Cancel</button></div>`;
@@ -980,8 +895,7 @@
       const content = modal.querySelector('#fileContent').value;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = await uploadFile(new File([blob], filename));
-      const attachment = { type: 'document', url, name: filename };
-      await sendMessage('', [attachment], isMobile);
+      await sendMessage('', [{ type: 'document', url, name: filename }], isMobile);
       modal.remove();
     };
     modal.querySelector('#cancelFileBtn').onclick = () => modal.remove();
@@ -989,17 +903,13 @@
     modal.style.display = 'flex';
   }
 
-  // Input typing handlers
   function onInputChange(isMobileDevice) {
     if (typingTimeout) clearTimeout(typingTimeout);
     const chatId = currentChat.type === 'group' ? (currentChat.id === 'main' ? 'main' : currentChat.id) : `private_${currentChat.id}`;
     setTyping(currentChat.type, chatId, true);
-    typingTimeout = setTimeout(() => {
-      setTyping(currentChat.type, chatId, false);
-    }, 1500);
+    typingTimeout = setTimeout(() => { setTyping(currentChat.type, chatId, false); }, 1500);
   }
 
-  // Mobile view helpers
   function showMobileChatView() {
     document.getElementById('mobileListView').style.transform = 'translateX(-100%)';
     document.getElementById('mobileChatView').style.transform = 'translateX(0)';
@@ -1009,7 +919,6 @@
     document.getElementById('mobileChatView').style.transform = 'translateX(100%)';
   }
 
-  // Attach file handler
   async function attachFile(isMobileDevice) {
     const input = document.createElement('input');
     input.type = 'file';
@@ -1028,47 +937,26 @@
     input.click();
   }
 
-  // ---------- Auth & Initialization ----------
+  // ---------- Auth & Init ----------
   async function startApp(user) {
     currentUser = user;
-    // Ensure user doc
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      await setDoc(userRef, { displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: serverTimestamp() });
-    } else {
-      await updateDoc(userRef, { online: true, lastSeen: serverTimestamp() });
-    }
+    await ensureUserDocument(user);
     startHeartbeat();
-    // Create default main group if needed
     const mainGroup = doc(db, 'groups', 'main');
     const mainSnap = await getDoc(mainGroup);
-    if (!mainSnap.exists()) {
-      await setDoc(mainGroup, { name: 'Whispers Squad', members: [user.uid], muted: [], createdAt: serverTimestamp() });
-    } else if (!mainSnap.data().members.includes(user.uid)) {
-      await updateDoc(mainGroup, { members: arrayUnion(user.uid) });
-    }
+    if (!mainSnap.exists()) await setDoc(mainGroup, { name: 'Whispers Squad', members: [user.uid], muted: [], createdAt: serverTimestamp() });
+    else if (!mainSnap.data().members.includes(user.uid)) await updateDoc(mainGroup, { members: arrayUnion(user.uid) });
     await renderChatList();
     currentChat = { type: 'group', id: 'main' };
-    if (isMobile) {
-      showMobileListView();
-      await loadActiveChatMobile();
-    } else {
-      await loadActiveChatDesktop();
-    }
-    // Attach event listeners
+    if (isMobile) { showMobileListView(); await loadActiveChatMobile(); } else await loadActiveChatDesktop();
+
+    // Attach all button handlers (ensuring they are not lost)
     desktopSend.onclick = async () => {
-      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) {
-        alert('You are muted in this group.');
-        return;
-      }
+      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
       sendMessage(desktopInput.value, [], false);
     };
     mobileSend.onclick = async () => {
-      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) {
-        alert('You are muted in this group.');
-        return;
-      }
+      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
       sendMessage(mobileInput.value, [], true);
     };
     desktopAttach.onclick = () => attachFile(false);
@@ -1082,25 +970,18 @@
     mobileBack.onclick = showMobileListView;
   }
 
-  // Auth state listener
   onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      document.getElementById('authModal').style.display = 'none';
-      await startApp(user);
-    } else {
-      document.getElementById('authModal').style.display = 'flex';
-    }
+    if (user) { document.getElementById('authModal').style.display = 'none'; await startApp(user); }
+    else { document.getElementById('authModal').style.display = 'flex'; }
   });
 
-  // Auth Modal UI Handlers (email/password only)
+  // Auth UI Handlers (email/password only)
   document.getElementById('loginTab').onclick = () => { document.getElementById('loginPanel').style.display = 'block'; document.getElementById('signupPanel').style.display = 'none'; };
   document.getElementById('signupTab').onclick = () => { document.getElementById('loginPanel').style.display = 'none'; document.getElementById('signupPanel').style.display = 'block'; };
   document.getElementById('doLoginBtn').onclick = async () => {
     const email = document.getElementById('loginUsername').value;
     const pwd = document.getElementById('loginPassword').value;
-    try {
-      await signInWithEmailAndPassword(auth, email, pwd);
-    } catch (err) { document.getElementById('authError').innerText = err.message; }
+    try { await signInWithEmailAndPassword(auth, email, pwd); } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
   document.getElementById('doSignupBtn').onclick = async () => {
     const email = document.getElementById('signupUsername').value;
