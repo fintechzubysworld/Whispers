@@ -619,23 +619,17 @@
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
   // ---------- Default Avatars Gallery (replace these URLs with your own hosted images) ----------
-  // After downloading the images from Google Drive, upload them to Firebase Storage or a public CDN,
-  // then replace the placeholder URLs below with the actual download URLs.
   const defaultAvatars = [
-    // example
     "https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png",
     "https://cdn.jsdelivr.net/gh/alohe/memojis/png/memo_16.png",
     "https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_9.png",
     'https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_3.png',
     'https://tse3.mm.bing.net/th/id/OIP.SyvBO6QMNZ8kZtiXz2G0GQAAAA?pid=ImgDet&w=440&h=440&rs=1&o=7&rm=3'
-    // Add more URLs as needed. For now, we'll generate placeholder images using a service.
-    // In a real scenario, you would upload the 50 images and list all their URLs here.
   ];
-  // To avoid broken images, we'll use a placeholder service for demonstration.
-  // You MUST replace these with your actual image URLs after hosting them.
+  // Fallback placeholders if not yet uploaded
   for (let i = 0; i < defaultAvatars.length; i++) {
     if (!defaultAvatars[i].startsWith("http")) {
-      defaultAvatars[i] = `https://picsum.photos/id/${i+10}/100/100`; // placeholder
+      defaultAvatars[i] = `https://picsum.photos/id/${i+10}/100/100`;
     }
   }
 
@@ -652,7 +646,7 @@
     }
     currentUserData = { ...currentUserData, ...updates };
     renderProfileAvatar();
-    renderChatList(); // refresh names in chat list
+    renderChatList();
   }
 
   async function uploadAvatar(file) {
@@ -663,14 +657,21 @@
     return url;
   }
 
+  // FIXED: Attach click listeners to both desktop and mobile avatars
   function renderProfileAvatar() {
     const avatarUrl = currentUserData?.avatarURL;
     const initial = (currentUserData?.displayName || currentUser?.email || 'U').charAt(0).toUpperCase();
     const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar" alt="Avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`;
-    if (desktopProfileAvatar) desktopProfileAvatar.innerHTML = avatarHtml;
-    if (mobileProfileAvatar) mobileProfileAvatar.innerHTML = avatarHtml;
-    const avatarElement = desktopProfileAvatar?.firstChild || mobileProfileAvatar?.firstChild;
-    if (avatarElement) avatarElement.onclick = showProfileModal;
+    if (desktopProfileAvatar) {
+      desktopProfileAvatar.innerHTML = avatarHtml;
+      const avatarElem = desktopProfileAvatar.firstChild;
+      if (avatarElem) avatarElem.addEventListener('click', showProfileModal);
+    }
+    if (mobileProfileAvatar) {
+      mobileProfileAvatar.innerHTML = avatarHtml;
+      const avatarElem = mobileProfileAvatar.firstChild;
+      if (avatarElem) avatarElem.addEventListener('click', showProfileModal);
+    }
   }
 
   function showProfileModal() {
