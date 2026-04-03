@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Whispers · Group Admin: Promote/Demote, Delete Group</title>
+  <title>Whispers · Profile & Avatars + Default Gallery</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -72,20 +72,27 @@
       justify-content: space-between;
       align-items: center;
     }
-    /* Square logo with skyblue-pink gradient */
-    .square-logo {
+    .profile-avatar {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #87CEEB, #FF69B4);
-      border-radius: 12px;
-      display: inline-flex;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      cursor: pointer;
+      border: 2px solid white;
+    }
+    .profile-avatar-placeholder {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #87CEEB;
+      display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 24px;
+      font-size: 18px;
       color: white;
-      margin-right: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
     }
     .sidebar-header h2 {
       font-size: 20px;
@@ -413,6 +420,32 @@
       font-size: 11px;
       margin-left: 8px;
     }
+    .profile-avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    .avatar-gallery {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 15px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .avatar-option {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.1s;
+    }
+    .avatar-option:hover { transform: scale(1.05); border-color: #4a90e2; }
     @keyframes fadeSlideUp {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -434,7 +467,10 @@
   <div class="desktop-layout">
     <div class="sidebar">
       <div class="sidebar-header">
-        <h2><span class="square-logo">W</span> Whispers</h2>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="desktopProfileAvatar"></div>
+          <h2>Whispers</h2>
+        </div>
         <button id="desktopLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <div class="chat-list" id="desktopChatList"></div>
@@ -455,8 +491,8 @@
   <div class="mobile-layout">
     <div id="mobileListView" class="mobile-view list-view">
       <div class="mobile-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="square-logo">W</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div id="mobileProfileAvatar"></div>
           <h2 style="margin:0;">Whispers</h2>
         </div>
         <button id="mobileLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
@@ -484,7 +520,7 @@
 <div id="authModal" class="modal" style="display: flex;">
   <div class="modal-card">
     <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-      <span class="square-logo" style="width: 60px; height: 60px; font-size: 36px; border-radius: 18px;">W</span>
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #87CEEB, #FF69B4); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white;">W</div>
     </div>
     <h3>Welcome to Whispers</h3>
     <div id="authTabs" style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -507,6 +543,23 @@
     </div>
     <div id="authError" style="color:red; margin-top:10px;"></div>
     <button id="closeModalBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+  <div class="modal-card">
+    <h3>Your Profile</h3>
+    <div style="display: flex; justify-content: center;">
+      <img id="profileAvatarImg" class="profile-avatar-large" src="" alt="Avatar">
+    </div>
+    <input type="text" id="profileDisplayName" placeholder="Display Name">
+    <button id="uploadAvatarBtn">Upload New Avatar</button>
+    <div><hr><p>Choose a default avatar</p></div>
+    <div id="avatarGallery" class="avatar-gallery"></div>
+    <button id="saveProfileBtn">Save Changes</button>
+    <button id="closeProfileModalBtn">Cancel</button>
+    <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
   </div>
 </div>
 
@@ -533,7 +586,8 @@
 
   // ---------- Global State ----------
   let currentUser = null;
-  let currentChat = { type: 'group', id: 'main' };
+  let currentUserData = null;
+  let currentChat = { type: 'group', id: null };
   let typingTimeout = null;
   let onlineInterval = null;
   let isMobile = window.innerWidth <= 768;
@@ -559,18 +613,102 @@
   const mobileBack = document.getElementById('mobileBackBtn');
   const desktopLogout = document.getElementById('desktopLogoutBtn');
   const mobileLogout = document.getElementById('mobileLogoutBtn');
+  const desktopProfileAvatar = document.getElementById('desktopProfileAvatar');
+  const mobileProfileAvatar = document.getElementById('mobileProfileAvatar');
 
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+  // ---------- Default Avatars Gallery (replace these URLs with your own hosted images) ----------
+  // After downloading the images from Google Drive, upload them to Firebase Storage or a public CDN,
+  // then replace the placeholder URLs below with the actual download URLs.
+  const defaultAvatars = [
+    // example
+    "https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png",
+    "https://cdn.jsdelivr.net/gh/alohe/memojis/png/memo_16.png",
+    "https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_9.png",
+    'https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_3.png',
+    'https://tse3.mm.bing.net/th/id/OIP.SyvBO6QMNZ8kZtiXz2G0GQAAAA?pid=ImgDet&w=440&h=440&rs=1&o=7&rm=3'
+    // Add more URLs as needed. For now, we'll generate placeholder images using a service.
+    // In a real scenario, you would upload the 50 images and list all their URLs here.
+  ];
+  // To avoid broken images, we'll use a placeholder service for demonstration.
+  // You MUST replace these with your actual image URLs after hosting them.
+  for (let i = 0; i < defaultAvatars.length; i++) {
+    if (!defaultAvatars[i].startsWith("http")) {
+      defaultAvatars[i] = `https://picsum.photos/id/${i+10}/100/100`; // placeholder
+    }
+  }
+
+  // ---------- Profile Helpers ----------
+  async function updateUserProfile(displayName, avatarURL) {
+    if (!currentUser) return;
+    const updates = {};
+    if (displayName !== undefined) updates.displayName = displayName;
+    if (avatarURL !== undefined) updates.avatarURL = avatarURL;
+    if (Object.keys(updates).length === 0) return;
+    await updateDoc(doc(db, 'users', currentUser.uid), updates);
+    if (displayName !== undefined && displayName !== currentUser.displayName) {
+      await updateProfile(auth.currentUser, { displayName });
+    }
+    currentUserData = { ...currentUserData, ...updates };
+    renderProfileAvatar();
+    renderChatList(); // refresh names in chat list
+  }
+
+  async function uploadAvatar(file) {
+    const storageRef = ref(storage, `avatars/${currentUser.uid}`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await updateUserProfile(undefined, url);
+    return url;
+  }
+
+  function renderProfileAvatar() {
+    const avatarUrl = currentUserData?.avatarURL;
+    const initial = (currentUserData?.displayName || currentUser?.email || 'U').charAt(0).toUpperCase();
+    const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar" alt="Avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`;
+    if (desktopProfileAvatar) desktopProfileAvatar.innerHTML = avatarHtml;
+    if (mobileProfileAvatar) mobileProfileAvatar.innerHTML = avatarHtml;
+    const avatarElement = desktopProfileAvatar?.firstChild || mobileProfileAvatar?.firstChild;
+    if (avatarElement) avatarElement.onclick = showProfileModal;
+  }
+
+  function showProfileModal() {
+    const modal = document.getElementById('profileModal');
+    const avatarImg = document.getElementById('profileAvatarImg');
+    const displayNameInput = document.getElementById('profileDisplayName');
+    if (currentUserData?.avatarURL) avatarImg.src = currentUserData.avatarURL;
+    else avatarImg.src = '';
+    displayNameInput.value = currentUserData?.displayName || '';
+    // Render avatar gallery
+    const gallery = document.getElementById('avatarGallery');
+    gallery.innerHTML = '';
+    defaultAvatars.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'avatar-option';
+      img.onclick = async () => {
+        await updateUserProfile(undefined, url);
+        modal.style.display = 'none';
+      };
+      gallery.appendChild(img);
+    });
+    modal.style.display = 'flex';
+  }
 
   // ---------- User & Online ----------
   async function ensureUserDocument(user) {
     const userRef = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
-      await setDoc(userRef, { displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: serverTimestamp() });
+      const newUser = { displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: serverTimestamp(), avatarURL: null };
+      await setDoc(userRef, newUser);
+      currentUserData = newUser;
     } else {
+      currentUserData = userSnap.data();
       await updateDoc(userRef, { online: true, lastSeen: serverTimestamp() });
     }
+    renderProfileAvatar();
   }
   async function setOnline(userId, status) {
     try { await updateDoc(doc(db, 'users', userId), { online: status, lastSeen: serverTimestamp() }); } catch(e) { console.warn(e); }
@@ -614,13 +752,13 @@
     const msg = {
       text: text.trim(),
       senderId: currentUser.uid,
-      senderName: currentUser.displayName || currentUser.email,
+      senderName: currentUserData?.displayName || currentUser.email,
       timestamp: serverTimestamp(),
       attachments: attachments
     };
     try {
       if (currentChat.type === 'group') {
-        const groupId = currentChat.id === 'main' ? 'main' : currentChat.id;
+        const groupId = currentChat.id;
         await addDoc(collection(db, 'groups', groupId, 'messages'), msg);
       } else {
         const ids = [currentUser.uid, currentChat.id].sort();
@@ -648,16 +786,10 @@
   }
   async function addMemberToGroup(groupId, userId) { await updateDoc(doc(db, 'groups', groupId), { members: arrayUnion(userId) }); }
   async function setGroupAdmin(groupId, userId, isAdmin) {
-    if (isAdmin) {
-      await updateDoc(doc(db, 'groups', groupId), { admins: arrayUnion(userId) });
-    } else {
-      await updateDoc(doc(db, 'groups', groupId), { admins: arrayRemove(userId) });
-    }
+    if (isAdmin) await updateDoc(doc(db, 'groups', groupId), { admins: arrayUnion(userId) });
+    else await updateDoc(doc(db, 'groups', groupId), { admins: arrayRemove(userId) });
   }
-  async function deleteGroup(groupId) {
-    // Delete the group document (subcollections remain but become inaccessible; for simplicity we just delete the doc)
-    await deleteDoc(doc(db, 'groups', groupId));
-  }
+  async function deleteGroup(groupId) { await deleteDoc(doc(db, 'groups', groupId)); }
   async function createGroup(name, memberIds) {
     const groupRef = doc(collection(db, 'groups'));
     await setDoc(groupRef, { name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], muted: [], createdAt: serverTimestamp() });
@@ -668,7 +800,7 @@
     await setDoc(doc(db, 'privateChats', otherUserId), { [currentUser.uid]: { lastMessage: '', timestamp: serverTimestamp() } }, { merge: true });
   }
 
-  // ---------- Render Chat List ----------
+  // ---------- Render Chat List (no default group) ----------
   async function renderChatList() {
     if (!currentUser) return;
     try {
@@ -681,9 +813,6 @@
       const render = (container, isDesktop) => {
         if (!container) return;
         container.innerHTML = '';
-        const mainItem = createChatItem('group', 'main', 'Whispers Squad', '');
-        mainItem.onclick = () => { currentChat = { type: 'group', id: 'main' }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
-        container.appendChild(mainItem);
         for (const grp of myGroups) {
           const item = createChatItem('group', grp.id, grp.name, '');
           item.onclick = () => { currentChat = { type: 'group', id: grp.id }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
@@ -697,6 +826,14 @@
             item.onclick = () => { currentChat = { type: 'private', id: otherId }; if (isDesktop) loadActiveChatDesktop(); else { showMobileChatView(); loadActiveChatMobile(); } renderChatList(); };
             container.appendChild(item);
           })();
+        }
+        if (myGroups.length === 0 && Object.keys(privateChats).length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.style.padding = '20px';
+          emptyDiv.style.textAlign = 'center';
+          emptyDiv.style.color = 'var(--time-color)';
+          emptyDiv.innerHTML = 'No conversations yet.<br>Click + to start a new chat or group.';
+          container.appendChild(emptyDiv);
         }
       };
       render(desktopChatList, true);
@@ -720,10 +857,10 @@
 
   async function loadMessages() {
     if (messagesUnsub) messagesUnsub();
+    if (!currentChat.id) return;
     let messagesRef;
     if (currentChat.type === 'group') {
-      const groupId = currentChat.id === 'main' ? 'main' : currentChat.id;
-      messagesRef = query(collection(db, 'groups', groupId, 'messages'), orderBy('timestamp', 'asc'));
+      messagesRef = query(collection(db, 'groups', currentChat.id, 'messages'), orderBy('timestamp', 'asc'));
     } else {
       const ids = [currentUser.uid, currentChat.id].sort();
       const convId = ids.join('_');
@@ -735,7 +872,7 @@
       renderMessages(msgs);
     }, (err) => console.error(err));
     if (typingUnsub) typingUnsub();
-    const typingId = currentChat.type === 'group' ? (currentChat.id === 'main' ? 'main' : currentChat.id) : `private_${currentChat.id}`;
+    const typingId = currentChat.type === 'group' ? currentChat.id : `private_${currentChat.id}`;
     typingUnsub = listenTyping(currentChat.type, typingId, (users) => {
       const typingDiv = document.getElementById('typingIndicator');
       if (typingDiv) typingDiv.innerText = users.length ? `${users.length} ${users.length === 1 ? 'person is' : 'people are'} typing...` : '';
@@ -787,10 +924,14 @@
   }
 
   async function renderDesktopHeader() {
+    if (!currentChat.id) {
+      desktopHeader.innerHTML = `<div class="chat-title">Select a chat</div>`;
+      return;
+    }
     let title = '';
     if (currentChat.type === 'group') {
-      if (currentChat.id === 'main') title = 'Whispers Squad';
-      else { const snap = await getDoc(doc(db, 'groups', currentChat.id)); title = snap.exists() ? snap.data().name : 'Group'; }
+      const snap = await getDoc(doc(db, 'groups', currentChat.id));
+      title = snap.exists() ? snap.data().name : 'Group';
     } else {
       const snap = await getDoc(doc(db, 'users', currentChat.id));
       title = snap.exists() ? (snap.data().displayName || currentChat.id) : currentChat.id;
@@ -806,10 +947,15 @@
   }
 
   async function renderMobileHeader() {
+    if (!currentChat.id) {
+      mobileChatTitle.innerHTML = `<div>Select a chat</div>`;
+      mobileAdminControls.innerHTML = '';
+      return;
+    }
     let title = '';
     if (currentChat.type === 'group') {
-      if (currentChat.id === 'main') title = 'Whispers Squad';
-      else { const snap = await getDoc(doc(db, 'groups', currentChat.id)); title = snap.exists() ? snap.data().name : 'Group'; }
+      const snap = await getDoc(doc(db, 'groups', currentChat.id));
+      title = snap.exists() ? snap.data().name : 'Group';
     } else {
       const snap = await getDoc(doc(db, 'users', currentChat.id));
       title = snap.exists() ? (snap.data().displayName || currentChat.id) : currentChat.id;
@@ -822,7 +968,6 @@
     }
   }
 
-  // Enhanced manage group modal with admin promotion/demotion and delete group
   async function showGroupManageModal(groupId) {
     try {
       const groupSnap = await getDoc(doc(db, 'groups', groupId));
@@ -851,7 +996,6 @@
       const memberListDiv = modal.querySelector('#memberListDiv');
       const nonMemberListDiv = modal.querySelector('#nonMemberList');
       
-      // Current members with admin status, kick/mute, and promote/demote
       for (const uid of members) {
         const userSnap = await getDoc(doc(db, 'users', uid));
         const name = userSnap.exists() ? (userSnap.data().displayName || uid) : uid;
@@ -880,7 +1024,6 @@
         memberListDiv.appendChild(row);
       }
       
-      // Add member section
       for (const user of allUsers) {
         const row = document.createElement('div');
         row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
@@ -890,47 +1033,29 @@
         nonMemberListDiv.appendChild(row);
       }
       
-      // Delete group button (only for admins)
       const isAdminUser = admins.includes(currentUser.uid);
       const deleteBtn = modal.querySelector('#deleteGroupBtn');
-      if (!isAdminUser) {
-        deleteBtn.style.display = 'none';
-      } else {
+      if (!isAdminUser) deleteBtn.style.display = 'none';
+      else {
         deleteBtn.onclick = async () => {
-          if (confirm(`⚠️ Are you sure you want to permanently delete this group? This action cannot be undone.`)) {
+          if (confirm(`⚠️ Are you sure you want to permanently delete this group?`)) {
             await deleteGroup(groupId);
             modal.remove();
-            // Redirect to main group or chat list
-            currentChat = { type: 'group', id: 'main' };
+            currentChat = { type: 'group', id: null };
             if (isMobile) { showMobileListView(); await loadActiveChatMobile(); } else await loadActiveChatDesktop();
             renderChatList();
-            addSystemNotification(`Group "${data.name}" has been deleted.`, 'group', 'main');
+            addSystemNotification(`Group "${data.name}" has been deleted.`, 'group', null);
           }
         };
       }
-      
       modal.querySelector('#closeGroupModalBtn').onclick = () => modal.remove();
       document.body.appendChild(modal);
       modal.style.display = 'flex';
     } catch(e) { console.error(e); }
   }
 
-  async function addSystemNotification(text, chatType = 'group', chatId = 'main') {
-    const msg = { id: Date.now(), text: `🔔 ${text}`, sender: "System", isSelf: false, timestamp: new Date().toLocaleTimeString(), attachments: [] };
-    if (chatType === 'group' && chatId === 'main') {
-      groupMessages.push(msg);
-      saveAll();
-      if (currentChat.type === 'group' && currentChat.id === 'main') renderMessages();
-    } else if (chatType === 'group' && chatId !== 'main') {
-      const grp = customGroups.find(g => g.id === chatId);
-      if (grp) { grp.messages.push(msg); saveAll(); if (currentChat.type === 'group' && currentChat.id === chatId) renderMessages(); }
-    } else if (chatType === 'private' && chatId) {
-      if (!privateMessages[chatId]) privateMessages[chatId] = [];
-      privateMessages[chatId].push(msg);
-      updatePrivateChatPreview(chatId, msg.text, msg.timestamp);
-      if (currentChat.type === 'private' && currentChat.id === chatId) renderMessages();
-    }
-    renderChatList();
+  async function addSystemNotification(text, chatType = 'group', chatId = null) {
+    // Not needed for main flow, but kept for compatibility
   }
 
   // ---------- Plus Menu ----------
@@ -1030,7 +1155,8 @@
 
   function onInputChange(isMobileDevice) {
     if (typingTimeout) clearTimeout(typingTimeout);
-    const chatId = currentChat.type === 'group' ? (currentChat.id === 'main' ? 'main' : currentChat.id) : `private_${currentChat.id}`;
+    if (!currentChat.id) return;
+    const chatId = currentChat.type === 'group' ? currentChat.id : `private_${currentChat.id}`;
     setTyping(currentChat.type, chatId, true);
     typingTimeout = setTimeout(() => { setTyping(currentChat.type, chatId, false); }, 1500);
   }
@@ -1062,41 +1188,29 @@
     input.click();
   }
 
-  // ---------- Data Persistence Helpers (for local fallback, but Firestore is primary) ----------
-  let groupMessages = [];
-  let customGroups = [];
-  let privateMessages = {};
-  let privateChats = [];
-  let groupMembers = [];
-  async function saveAll() {
-    localStorage.setItem("whispers_group_messages", JSON.stringify(groupMessages));
-    localStorage.setItem("whispers_custom_groups", JSON.stringify(customGroups));
-    localStorage.setItem("whispers_private_messages", JSON.stringify(privateMessages));
-    localStorage.setItem("whispers_private_chats", JSON.stringify(privateChats));
-    localStorage.setItem("whispers_group_members", JSON.stringify(groupMembers));
-  }
-  function updatePrivateChatPreview(userId, lastMsg, timestamp) { /* stub, not needed with Firestore */ }
-
   // ---------- Auth & Init ----------
   async function startApp(user) {
     currentUser = user;
     await ensureUserDocument(user);
     startHeartbeat();
-    const mainGroup = doc(db, 'groups', 'main');
-    const mainSnap = await getDoc(mainGroup);
-    if (!mainSnap.exists()) await setDoc(mainGroup, { name: 'Whispers Squad', members: [user.uid], admins: [user.uid], muted: [], createdAt: serverTimestamp() });
-    else if (!mainSnap.data().members.includes(user.uid)) await updateDoc(mainGroup, { members: arrayUnion(user.uid) });
     await renderChatList();
-    currentChat = { type: 'group', id: 'main' };
+    // If there are any groups, select the first one; otherwise no chat selected
+    const groupsSnap = await getDocs(collection(db, 'groups'));
+    let firstGroupId = null;
+    groupsSnap.forEach(doc => { if (doc.data().members.includes(user.uid) && !firstGroupId) firstGroupId = doc.id; });
+    if (firstGroupId) currentChat = { type: 'group', id: firstGroupId };
+    else currentChat = { type: 'group', id: null };
     if (isMobile) { showMobileListView(); await loadActiveChatMobile(); } else await loadActiveChatDesktop();
 
     // Attach all button handlers
     desktopSend.onclick = async () => {
-      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
+      if (!currentChat.id) { alert('No chat selected. Create or join a group first.'); return; }
+      if (currentChat.type === 'group' && await isMuted(currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
       sendMessage(desktopInput.value, [], false);
     };
     mobileSend.onclick = async () => {
-      if (currentChat.type === 'group' && await isMuted(currentChat.id === 'main' ? 'main' : currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
+      if (!currentChat.id) { alert('No chat selected. Create or join a group first.'); return; }
+      if (currentChat.type === 'group' && await isMuted(currentChat.id, currentUser.uid)) { alert('You are muted in this group.'); return; }
       sendMessage(mobileInput.value, [], true);
     };
     desktopAttach.onclick = () => attachFile(false);
@@ -1130,7 +1244,7 @@
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pwd);
       await updateProfile(cred.user, { displayName: name });
-      await setDoc(doc(db, 'users', cred.user.uid), { displayName: name, email, online: true, lastSeen: serverTimestamp() });
+      await setDoc(doc(db, 'users', cred.user.uid), { displayName: name, email, online: true, lastSeen: serverTimestamp(), avatarURL: null });
     } catch (err) { document.getElementById('authError').innerText = err.message; }
   };
   document.getElementById('googleLoginBtn').onclick = async () => {
@@ -1142,6 +1256,22 @@
     isMobile = window.innerWidth <= 768;
     if (!isMobile && currentChat) loadActiveChatDesktop();
   });
+
+  // Profile modal handlers
+  document.getElementById('saveProfileBtn').onclick = async () => {
+    const newName = document.getElementById('profileDisplayName').value.trim();
+    if (newName) await updateUserProfile(newName, undefined);
+    document.getElementById('profileModal').style.display = 'none';
+  };
+  document.getElementById('closeProfileModalBtn').onclick = () => document.getElementById('profileModal').style.display = 'none';
+  document.getElementById('uploadAvatarBtn').onclick = () => document.getElementById('avatarFileInput').click();
+  document.getElementById('avatarFileInput').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      await uploadAvatar(file);
+      document.getElementById('profileModal').style.display = 'none';
+    }
+  };
 </script>
 </body>
 </html>
