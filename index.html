@@ -59,7 +59,6 @@
       flex-direction: column;
     }
 
-    /* DESKTOP LAYOUT (side-by-side) */
     .desktop-layout {
       display: flex;
       height: 100%;
@@ -108,6 +107,21 @@
       font-size: 18px;
       color: white;
       cursor: pointer;
+    }
+
+    .auth-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: auto;
+      padding: 8px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .logout-icon {
@@ -266,7 +280,7 @@
     }
 
     .back-button {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
       width: 36px;
@@ -397,6 +411,26 @@
       padding: 0 12px;
     }
 
+    /* Welcome overlay / placeholder */
+    .welcome-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: #2c6eb3;
+      padding: 20px;
+    }
+    .welcome-placeholder i {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+    .welcome-placeholder h3 {
+      margin-bottom: 12px;
+    }
+
     /* MODALS */
     .modal {
       display: none;
@@ -483,6 +517,10 @@
       cursor: pointer;
     }
 
+    input, button {
+      font-family: inherit;
+    }
+
     /* MOBILE OVERRIDES */
     @media (max-width: 768px) {
       .desktop-layout {
@@ -501,7 +539,6 @@
         display: none;
       }
 
-      /* when chat is active, hide sidebar, show chat */
       body.mobile-chat-active .sidebar {
         display: none;
       }
@@ -548,11 +585,17 @@
           <div id="desktopProfileAvatar"></div>
           <h2>Whispers</h2>
         </div>
-        <button id="desktopLogoutBtn" class="logout-icon"><i class="fas fa-sign-out-alt"></i></button>
+        <button id="authActionBtn" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Sign In</button>
       </div>
-      <div class="chat-list" id="desktopChatList"></div>
-      <button id="desktopFabPlus" class="fab-plus"><i class="fas fa-plus"></i></button>
-      <div class="floating-game-menu" id="gameMenuDesktop">
+      <div class="chat-list" id="desktopChatList">
+        <div class="welcome-placeholder">
+          <i class="fas fa-comments"></i>
+          <h3>Welcome to Whispers</h3>
+          <p>Sign in to start chatting</p>
+        </div>
+      </div>
+      <button id="desktopFabPlus" class="fab-plus" style="display: none;"><i class="fas fa-plus"></i></button>
+      <div class="floating-game-menu" id="gameMenuDesktop" style="display: none;">
         <button class="game-menu-btn" id="desktopGamesBtn"><i class="fas fa-gamepad"></i></button>
       </div>
     </div>
@@ -562,20 +605,26 @@
       <div class="chat-header">
         <button id="mobileBackBtn" class="back-button"><i class="fas fa-arrow-left"></i></button>
         <div class="chat-title" id="desktopChatHeader">Select a chat</div>
-        <div style="width: 36px;"></div> <!-- spacer -->
+        <div style="width: 36px;"></div>
       </div>
-      <div class="chat-messages" id="desktopChatMessages"></div>
-      <div class="input-area">
+      <div class="chat-messages" id="desktopChatMessages">
+        <div class="welcome-placeholder">
+          <i class="fas fa-lock"></i>
+          <h3>Chats are private</h3>
+          <p>Sign in to view and send messages</p>
+        </div>
+      </div>
+      <div class="input-area" style="display: none;">
         <button id="desktopAttachBtn" class="attach-btn"><i class="fas fa-paperclip"></i></button>
-        <input type="text" id="desktopMessageInput" placeholder="Aa">
+        <input type="text" id="desktopMessageInput" placeholder="Aa" disabled>
         <button id="desktopSendBtn"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Auth Modal -->
-<div id="authModal" class="modal" style="display: flex;">
+<!-- Auth Modal (initially hidden) -->
+<div id="authModal" class="modal">
   <div class="modal-card">
     <div style="display: flex; justify-content: center; margin-bottom: 10px;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #87CEEB, #FF69B4); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white;">W</div>
@@ -638,18 +687,16 @@
   let currentChat = { type: null, id: null };
   let messagesUnsub = null;
 
-  // Helper functions
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
   const defaultAvatars = ["https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/memo_16.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_9.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_3.png"];
 
-  // Mobile view toggling
   function isMobile() { return window.innerWidth <= 768; }
   function showChatListView() {
     document.body.classList.remove('mobile-chat-active');
     if (messagesUnsub) messagesUnsub();
     currentChat = { type: null, id: null };
     document.getElementById('desktopChatHeader').innerHTML = 'Select a chat';
-    document.getElementById('desktopChatMessages').innerHTML = '<div style="padding:20px;text-align:center;color:gray;">👈 Pick a conversation</div>';
+    document.getElementById('desktopChatMessages').innerHTML = '<div class="welcome-placeholder"><i class="fas fa-comment-dots"></i><p></p></div>';
   }
   function showChatView() {
     if (isMobile()) document.body.classList.add('mobile-chat-active');
@@ -678,12 +725,19 @@
   function renderProfileAvatar() {
     const avatarUrl = currentUserData?.avatarURL;
     const initial = (currentUserData?.displayName || currentUser?.email || 'U').charAt(0).toUpperCase();
-    const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar" alt="Avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`;
     const container = document.getElementById('desktopProfileAvatar');
-    if (container) { container.innerHTML = avatarHtml; container.firstChild?.addEventListener('click', showProfileModal); }
+    if (!container) return;
+    if (currentUser) {
+      const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar" alt="Avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`;
+      container.innerHTML = avatarHtml;
+      container.firstChild?.addEventListener('click', showProfileModal);
+    } else {
+      container.innerHTML = '<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>';
+    }
   }
 
   function showProfileModal() {
+    if (!currentUser) return;
     const modal = document.getElementById('profileModal');
     document.getElementById('profileAvatarImg').src = currentUserData?.avatarURL || '';
     document.getElementById('profileDisplayName').value = currentUserData?.displayName || '';
@@ -712,7 +766,7 @@
   }
 
   async function sendMessage(text, attachments) {
-    if (!currentChat.id) { alert("Please select a chat first"); return; }
+    if (!currentChat.id || !currentUser) return;
     if (!text.trim() && (!attachments || attachments.length === 0)) return;
     const msg = { text: text.trim(), senderId: currentUser.uid, senderName: currentUserData?.displayName || currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp(), attachments: attachments || [] };
     if (currentChat.type === 'group') {
@@ -728,7 +782,7 @@
   }
 
   async function attachFile() {
-    if (!currentChat.id) { alert("Select a chat first"); return; }
+    if (!currentChat.id || !currentUser) { alert("Select a chat first"); return; }
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,video/*,audio/*,application/pdf';
     input.onchange = async (e) => {
       const file = e.target.files[0]; if (!file) return;
@@ -763,31 +817,30 @@
     const container = document.getElementById('desktopChatList');
     if (!container) return;
     container.innerHTML = '';
-    // Groups
-    myGroups.forEach(grp => {
-      const item = document.createElement('div'); item.className = 'chat-list-item';
-      item.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(grp.name)}</div><div class="chat-preview">Group · ${grp.members?.length || 0} members</div></div>`;
-      item.onclick = async () => { await openChat('group', grp.id); };
-      container.appendChild(item);
-    });
-    // Private chats
-    for (const otherId of Object.keys(privateChats)) {
-      const userSnap = await db.collection("users").doc(otherId).get();
-      const name = userSnap.exists ? (userSnap.data().displayName || otherId) : otherId;
-      const item = document.createElement('div'); item.className = 'chat-list-item';
-      item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}</div><div class="chat-preview">Private chat</div></div>`;
-      item.onclick = async () => { await openChat('private', otherId); };
-      container.appendChild(item);
-    }
     if (myGroups.length === 0 && Object.keys(privateChats).length === 0) {
-      container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--time-color)">✨ No chats yet.<br>Tap + to start a chat or group.</div>';
+      container.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-plus-circle"></i><h3>No chats yet</h3><p>Tap the + button to start a conversation</p></div>';
+    } else {
+      myGroups.forEach(grp => {
+        const item = document.createElement('div'); item.className = 'chat-list-item';
+        item.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(grp.name)}</div><div class="chat-preview">Group · ${grp.members?.length || 0} members</div></div>`;
+        item.onclick = async () => { await openChat('group', grp.id); };
+        container.appendChild(item);
+      });
+      for (const otherId of Object.keys(privateChats)) {
+        const userSnap = await db.collection("users").doc(otherId).get();
+        const name = userSnap.exists ? (userSnap.data().displayName || otherId) : otherId;
+        const item = document.createElement('div'); item.className = 'chat-list-item';
+        item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}</div><div class="chat-preview">Private chat</div></div>`;
+        item.onclick = async () => { await openChat('private', otherId); };
+        container.appendChild(item);
+      }
     }
   }
 
   async function openChat(type, id) {
+    if (!currentUser) return;
     if (messagesUnsub) messagesUnsub();
     currentChat = { type, id };
-    // Update header
     let title = '';
     if (type === 'group') {
       const snap = await db.collection("groups").doc(id).get();
@@ -797,7 +850,6 @@
       title = snap.exists ? (snap.data().displayName || id) : id;
     }
     document.getElementById('desktopChatHeader').innerHTML = `<i class="${type === 'group' ? 'fas fa-users' : 'fas fa-user'}"></i> ${escapeHtml(title)}`;
-    // load messages
     let messagesRef;
     if (type === 'group') {
       messagesRef = db.collection("groups").doc(id).collection("messages").orderBy("timestamp", "asc");
@@ -840,13 +892,15 @@
     showChatView();
   }
 
-  // GAME (Brick Breaker) identical to original but no changes needed
+  // Game Brick Breaker (unchanged)
   let gameAnimationId = null;
   function showGamesModal() {
+    if (!currentUser) { alert("Please sign in to play games"); return; }
     if (gameAnimationId) cancelAnimationFrame(gameAnimationId);
     const modal = document.createElement('div'); modal.className = 'modal'; modal.style.display = 'flex';
     modal.innerHTML = `<div class="modal-card"><h3><i class="fas fa-gamepad"></i> Brick Breaker · Level <span id="levelNum">1</span>/7</h3><div class="game-container"><canvas id="brickCanvas" width="700" height="450" style="width:100%; max-width:700px; aspect-ratio:700/450"></canvas><div class="game-stats"><div>💥 Score: <span id="gameScore">0</span></div><div>❤️ Lives: <span id="gameLives">3</span></div><div>🏆 Level: <span id="gameLevel">1</span></div></div><div class="game-controls"><button id="restartGameBtn" class="game-btn">🔄 Restart</button><button id="closeGameModalBtn" class="game-btn">✖ Close</button></div></div></div>`;
     document.body.appendChild(modal);
+    // game logic identical to original (omitted for brevity but fully functional)
     const canvas = modal.querySelector('#brickCanvas'); const ctx = canvas.getContext('2d');
     let gameRunning = true, score = 0, lives = 3, currentLevel = 1;
     let ball = { x: canvas.width/2, y: canvas.height-50, dx: 3.5, dy: -3.8, radius: 6 };
@@ -872,12 +926,7 @@
       ball.dy = -Math.abs(ball.dy);
       if (ball.dy > -3) ball.dy = -3.5;
     }
-    function draw() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      bricks.forEach(b=>{ if(b.status) { ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle='#ffffff80'; ctx.strokeRect(b.x,b.y,b.w,b.h); } });
-      ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fillStyle='#FFD966'; ctx.fill();
-      ctx.fillStyle='#4a90e2'; ctx.fillRect(paddle.x, canvas.height-paddle.height-5, paddle.width, paddle.height);
-    }
+    function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); bricks.forEach(b=>{ if(b.status) { ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle='#ffffff80'; ctx.strokeRect(b.x,b.y,b.w,b.h); } }); ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fillStyle='#FFD966'; ctx.fill(); ctx.fillStyle='#4a90e2'; ctx.fillRect(paddle.x, canvas.height-paddle.height-5, paddle.width, paddle.height); }
     function update() {
       if(!gameRunning) return;
       ball.x+=ball.dx; ball.y+=ball.dy;
@@ -927,6 +976,7 @@
   }
 
   function showPlusMenu() {
+    if (!currentUser) return;
     let menu = document.querySelector('.plus-menu');
     if(menu) menu.remove();
     const div = document.createElement('div'); div.className = 'plus-menu';
@@ -950,29 +1000,47 @@
     };
   }
 
-  async function startApp(user) {
+  function setLoggedOutUI() {
+    currentUser = null;
+    if (messagesUnsub) messagesUnsub();
+    currentChat = { type: null, id: null };
+    document.getElementById('authActionBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+    document.getElementById('authActionBtn').onclick = () => document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('desktopProfileAvatar').innerHTML = '<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>';
+    document.getElementById('desktopChatList').innerHTML = '<div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome to Whispers</h3><p>Sign in to start chatting</p></div>';
+    document.getElementById('desktopChatHeader').innerHTML = 'Select a chat';
+    document.getElementById('desktopChatMessages').innerHTML = '<div class="welcome-placeholder"><i class="fas fa-lock"></i><h3>Chats are private</h3><p>Sign in to view and send messages</p></div>';
+    document.querySelector('.input-area').style.display = 'none';
+    document.getElementById('desktopFabPlus').style.display = 'none';
+    document.getElementById('gameMenuDesktop').style.display = 'none';
+    document.getElementById('desktopMessageInput').disabled = true;
+    showChatListView();
+  }
+
+  async function setLoggedInUI(user) {
     currentUser = user;
     await ensureUserDocument(user);
     await renderChatList();
     showChatListView();
-    document.getElementById('desktopSendBtn').onclick = () => sendMessage(document.getElementById('desktopMessageInput').value, []);
-    document.getElementById('desktopAttachBtn').onclick = attachFile;
-    document.getElementById('desktopLogoutBtn').onclick = async () => { await auth.signOut(); location.reload(); };
-    document.getElementById('desktopFabPlus').onclick = showPlusMenu;
-    document.getElementById('desktopGamesBtn').onclick = showGamesModal;
-    document.getElementById('desktopMessageInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(e.target.value, []); });
-    document.getElementById('mobileBackBtn').onclick = () => { showChatListView(); };
+    document.getElementById('authActionBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+    document.getElementById('authActionBtn').onclick = async () => { await auth.signOut(); setLoggedOutUI(); };
+    document.querySelector('.input-area').style.display = 'flex';
+    document.getElementById('desktopFabPlus').style.display = 'flex';
+    document.getElementById('gameMenuDesktop').style.display = 'flex';
+    document.getElementById('desktopMessageInput').disabled = false;
+    renderProfileAvatar();
   }
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       document.getElementById('authModal').style.display = 'none';
-      await startApp(user);
+      await setLoggedInUI(user);
     } else {
-      document.getElementById('authModal').style.display = 'flex';
+      setLoggedOutUI();
     }
   });
-  // Auth UI
+
+  // Auth UI handlers
   document.getElementById('loginTab').onclick = () => { document.getElementById('loginPanel').style.display='block'; document.getElementById('signupPanel').style.display='none'; };
   document.getElementById('signupTab').onclick = () => { document.getElementById('loginPanel').style.display='none'; document.getElementById('signupPanel').style.display='block'; };
   document.getElementById('doLoginBtn').onclick = async () => { try{ await auth.signInWithEmailAndPassword(document.getElementById('loginUsername').value, document.getElementById('loginPassword').value); }catch(e){ document.getElementById('authError').innerText=e.message; } };
@@ -983,6 +1051,12 @@
   document.getElementById('closeProfileModalBtn').onclick = () => document.getElementById('profileModal').style.display='none';
   document.getElementById('uploadAvatarBtn').onclick = () => document.getElementById('avatarFileInput').click();
   document.getElementById('avatarFileInput').onchange = async (e) => { if(e.target.files[0]){ await uploadAvatar(e.target.files[0]); document.getElementById('profileModal').style.display='none'; } };
+  document.getElementById('desktopSendBtn').onclick = () => sendMessage(document.getElementById('desktopMessageInput').value, []);
+  document.getElementById('desktopAttachBtn').onclick = attachFile;
+  document.getElementById('desktopFabPlus').onclick = showPlusMenu;
+  document.getElementById('desktopGamesBtn').onclick = showGamesModal;
+  document.getElementById('desktopMessageInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(e.target.value, []); });
+  document.getElementById('mobileBackBtn').onclick = () => { showChatListView(); };
   window.addEventListener('resize', () => { if (!isMobile() && document.body.classList.contains('mobile-chat-active')) document.body.classList.remove('mobile-chat-active'); });
 </script>
 </body>
