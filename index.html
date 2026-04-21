@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
-  <!-- PDF.js & EPUB.js for Whisp Reader -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -59,7 +58,12 @@
     .sender-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; color: #2c6eb3; cursor: pointer; }
     .message-text { font-size: 14px; line-height: 1.4; word-break: break-word; }
     .attachment { margin-top: 8px; background: rgba(0,0,0,0.05); border-radius: 12px; padding: 8px; display: flex; align-items: center; gap: 8px; }
-    .message-time { font-size: 10px; color: var(--time-color); margin-top: 6px; text-align: right; letter-spacing: 0.2px; opacity: 0.75; }
+    .message-time { font-size: 10px; color: var(--time-color); margin-top: 6px; text-align: right; letter-spacing: 0.2px; opacity: 0.75; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+    .status-icons { display: inline-flex; gap: 2px; margin-left: 6px; }
+    .status-icons i { font-size: 10px; }
+    .status-icons .read { color: #7fffd4; }
+    .status-icons .delivered { color: #6b7b8c; }
+    .status-icons .sent { color: #6b7b8c; }
     .input-area { background: var(--input-area-bg); padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); }
     .input-area input { flex: 1; border: none; background: #f0f8ff; padding: 12px 18px; border-radius: 30px; font-size: 15px; outline: none; }
     .input-area button { background: var(--send-btn-bg); border: none; color: white; width: 44px; height: 44px; border-radius: 30px; cursor: pointer; font-size: 20px; }
@@ -93,31 +97,12 @@
     .member-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; max-height: 300px; overflow-y: auto; }
     .member-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
     .profile-avatar-large { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
-
-    /* Edit/delete actions only visible on hover */
     .message-actions {
-      position: absolute;
-      right: 8px;
-      top: -20px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      display: none;
-      gap: 8px;
-      padding: 4px 8px;
-      z-index: 5;
+      position: absolute; right: 8px; top: -20px; background: white; border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; gap: 8px; padding: 4px 8px; z-index: 5;
     }
-    .message-row:hover .message-actions {
-      display: flex;
-    }
-    .message-actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-      color: #4a90e2;
-      padding: 2px;
-    }
+    .message-row:hover .message-actions { display: flex; }
+    .message-actions button { background: none; border: none; cursor: pointer; font-size: 12px; color: #4a90e2; padding: 2px; }
     .message-actions button:hover { color: #2c6eb3; }
   </style>
 </head>
@@ -147,28 +132,28 @@
 <div id="readerModal" class="modal"><div class="modal-card" style="width: 800px; max-width: 95vw;"><h3><i class="fas fa-book-open"></i> Whisp Reader · PDF & EPUB</h3><input type="file" id="readerFileInput" accept=".pdf,.epub" style="margin: 12px 0; padding: 8px;"><div id="readerViewerContainer" class="reader-container"><div id="readerViewer" class="reader-viewer">📖 Select a PDF or EPUB file to start reading</div></div><button id="closeReaderModalBtn" class="game-btn" style="margin-top: 12px;">Close</button></div></div>
 
 <script>
-  // ======================= Firebase Core =======================
+  // Firebase config
   const firebaseConfig = { apiKey: "AIzaSyAmgvzZju_GbPdUDDHqFg4AN54xnJ4LwW8", authDomain: "whispers-4d04e.firebaseapp.com", projectId: "whispers-4d04e", storageBucket: "whispers-4d04e.firebasestorage.app", messagingSenderId: "32971948813", appId: "1:32971948813:web:3ea4e8a242c055a7e52644", measurementId: "G-K4N3XEBZKK" };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
   let currentUser = null, currentUserData = null, currentChat = { type: null, id: null }, messagesUnsub = null, typingTimeout = null, typingUnsub = null;
   let chatsUnsubPrivate = null, chatsUnsubGroups = null;
   let isRendering = false;
+
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
   function isMobile() { return window.innerWidth <= 768; }
   function formatMessageTime(timestamp) { if (!timestamp) return ''; const date = timestamp.toDate(); const now = new Date(); const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()); const isToday = date >= todayMidnight; const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); if (isToday) return timeStr; return `${date.getMonth()+1}/${date.getDate()} ${timeStr}`; }
   function showChatListView() { document.body.classList.remove('mobile-chat-active'); if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); currentChat = { type: null, id: null }; const header = document.getElementById('desktopChatHeader'); if(header) header.innerHTML = 'Select a chat'; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) membersBtn.style.display = 'none'; const messagesDiv = document.getElementById('desktopChatMessages'); if(messagesDiv) messagesDiv.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-comment-dots"></i><p>Pick a conversation</p></div>'; const typingSpan = document.getElementById('typingIndicator'); if(typingSpan) typingSpan.innerText = ''; }
   function showChatView() { if(isMobile()) document.body.classList.add('mobile-chat-active'); }
+
   async function updateUserProfile(displayName, avatarURL) { if(!currentUser) return; const updates = {}; if(displayName !== undefined) updates.displayName = displayName; if(avatarURL !== undefined) updates.avatarURL = avatarURL; if(Object.keys(updates).length) await db.collection("users").doc(currentUser.uid).update(updates); if(displayName && displayName !== currentUser.displayName) await currentUser.updateProfile({ displayName }); currentUserData = { ...currentUserData, ...updates }; renderProfileAvatar(); renderChatList(); }
   function renderProfileAvatar() { const container = document.getElementById('desktopProfileAvatar'); if(!container) return; if(currentUser){ const avatarUrl = currentUserData?.avatarURL; const initial = (currentUserData?.displayName || currentUser?.email || 'U').charAt(0).toUpperCase(); container.innerHTML = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`; const avatarDiv = container.firstChild; if(avatarDiv) avatarDiv.addEventListener('click', () => showUserProfile(currentUser.uid)); } else { container.innerHTML = '<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>'; } }
   async function showUserProfile(userId) { const userDoc = await db.collection("users").doc(userId).get(); if(!userDoc.exists) { await alert("User not found"); return; } const data = userDoc.data(); const modal = document.getElementById('profileModal'); if(!modal) return; const content = document.getElementById('profileViewContent'); if(content) content.innerHTML = `<img src="${data.avatarURL || 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png'}" class="profile-avatar-large" style="width:100px; height:100px; border-radius:50%;"><h3>${escapeHtml(data.displayName || userId)}</h3><p style="color:#6b7b8c;">${escapeHtml(data.email || '')}</p>${userId !== currentUser.uid ? `<button id="startChatFromProfileBtn" class="game-btn" style="margin-top:8px;"><i class="fas fa-comment"></i> Send Message</button>` : ''}`;
     modal.style.display = 'flex'; if(userId !== currentUser.uid) { const chatBtn = document.getElementById('startChatFromProfileBtn'); if(chatBtn) chatBtn.onclick = async () => { modal.style.display = 'none'; await startPrivateChat(userId); await renderChatList(); await openChat('private', userId); }; } }
   async function ensureUserDocument(user) { const userRef = db.collection("users").doc(user.uid); const snap = await userRef.get(); if(!snap.exists){ await userRef.set({ displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp(), avatarURL: null }); currentUserData = { displayName: user.displayName || user.email, email: user.email, avatarURL: null }; } else { currentUserData = snap.data(); await userRef.update({ online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); } renderProfileAvatar(); }
+
   async function updateUnreadCount(chatType, chatId, members, excludeUserId) {
-    // Do NOT increment for the current user if they are actively viewing this chat
-    if (currentChat && currentChat.type === chatType && currentChat.id === chatId) {
-      return; // Skip increment because chat is open
-    }
+    if (currentChat && currentChat.type === chatType && currentChat.id === chatId) return;
     const inc = firebase.firestore.FieldValue.increment(1);
     const data = {};
     for(let uid of members) if(uid !== excludeUserId) data[`unreadCounts.${uid}`] = inc;
@@ -179,83 +164,169 @@
   async function updateLastMessage(chatType, chatId, messageText, senderName) { const preview = messageText.length > 40 ? messageText.substring(0,40)+'…' : messageText; const timestamp = firebase.firestore.FieldValue.serverTimestamp(); if(chatType === 'group') await db.collection("groups").doc(chatId).update({ lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName }).catch(()=>{}); else { const otherId = chatId; await db.collection("privateChats").doc(currentUser.uid).set({ [otherId]: { lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName } }, { merge: true }); await db.collection("privateChats").doc(otherId).set({ [currentUser.uid]: { lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName } }, { merge: true }); } }
   function subscribeToChatList() { if (chatsUnsubPrivate) chatsUnsubPrivate(); if (chatsUnsubGroups) chatsUnsubGroups(); if (!currentUser) return; chatsUnsubPrivate = db.collection("privateChats").doc(currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err)); chatsUnsubGroups = db.collection("groups").where("members", "array-contains", currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err)); }
   async function renderChatList() { if (!currentUser || isRendering) return; isRendering = true; try { const groupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get(); const groupsMap = new Map(); groupsSnap.forEach(doc => { groupsMap.set(doc.id, { id: doc.id, ...doc.data() }); }); const privateChatsSnap = await db.collection("privateChats").doc(currentUser.uid).get(); const privateRaw = privateChatsSnap.exists ? privateChatsSnap.data() : {}; const privateMap = new Map(); for (let otherId of Object.keys(privateRaw)) privateMap.set(otherId, privateRaw[otherId]); const container = document.getElementById('desktopChatList'); if(!container) return; container.innerHTML = ''; if (groupsMap.size === 0 && privateMap.size === 0) { container.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-plus-circle"></i><h3>No chats</h3><p>Tap + to start a conversation</p></div>'; return; } if (groupsMap.size > 0) { const groupsHeader = document.createElement('div'); groupsHeader.className = 'section-header'; groupsHeader.innerHTML = '<i class="fas fa-users" style="margin-right: 6px;"></i> GROUP CHATS'; container.appendChild(groupsHeader); for (let [id, grp] of groupsMap.entries()) { let unread = (grp.unreadCounts?.[currentUser.uid] || 0); if (currentChat.type === 'group' && currentChat.id === id) unread = 0; const lastMsg = grp.lastMessage ? (grp.lastSender ? `${grp.lastSender}: ${grp.lastMessage}` : grp.lastMessage) : 'No messages'; const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(grp.name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`; item.onclick = async () => { await openChat('group', id); }; container.appendChild(item); } } if (privateMap.size > 0) { const privateHeader = document.createElement('div'); privateHeader.className = 'section-header'; privateHeader.innerHTML = '<i class="fas fa-user-friends" style="margin-right: 6px;"></i> PRIVATE CHATS'; container.appendChild(privateHeader); for (let [otherId, chatData] of privateMap.entries()) { const userSnap = await db.collection("users").doc(otherId).get(); const name = userSnap.exists ? (userSnap.data().displayName || otherId) : otherId; const ids = [currentUser.uid, otherId].sort(); const convDoc = await db.collection("privateMessages").doc(ids.join('_')).get(); let unread = convDoc.exists ? (convDoc.data().unreadCounts?.[currentUser.uid] || 0) : 0; if (currentChat.type === 'private' && currentChat.id === otherId) unread = 0; let lastMsg = chatData.lastMessage || 'No messages yet'; if (chatData.lastSender && chatData.lastSender !== currentUser.uid) lastMsg = `${chatData.lastSender}: ${lastMsg}`; const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`; item.onclick = async () => { await openChat('private', otherId); }; container.appendChild(item); } } } finally { isRendering = false; } }
-  async function openChat(type, id) { if(!currentUser) return; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); currentChat = { type, id }; await resetUnreadCount(type, id); renderChatList(); let title = ''; if(type==='group') { const snap=await db.collection("groups").doc(id).get(); title=snap.exists?snap.data().name:'Group'; } else { const snap=await db.collection("users").doc(id).get(); title=snap.exists?(snap.data().displayName||id):id; } const header = document.getElementById('desktopChatHeader'); if(header) header.innerHTML = `<i class="${type==='group'?'fas fa-users':'fas fa-user'}"></i> ${escapeHtml(title)}`; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) { membersBtn.style.display = type==='group' ? 'flex' : 'none'; if(type==='group') membersBtn.onclick = () => showGroupMembers(id); } if(type!=='group' && header) header.onclick = () => showUserProfile(id); let messagesRef; if(type==='group') messagesRef = db.collection("groups").doc(id).collection("messages").orderBy("timestamp","asc"); else { const ids=[currentUser.uid,id].sort(); messagesRef = db.collection("privateMessages").doc(ids.join('_')).collection("messages").orderBy("timestamp","asc"); } messagesUnsub = messagesRef.onSnapshot(async (snap) => { const container = document.getElementById('desktopChatMessages'); if(!container) return; container.innerHTML = ''; snap.forEach(doc => { const msg = doc.data(); const isSelf = msg.senderId === currentUser.uid; const row = document.createElement('div'); row.className = `message-row ${isSelf?'sent':'received'}`; const bubble = document.createElement('div'); bubble.className = 'message-bubble'; if (currentChat.type === 'group') { const senderSpan = document.createElement('div'); senderSpan.className = 'sender-name'; senderSpan.innerHTML = !isSelf ? `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.senderName || msg.senderId)}` : `<i class="fas fa-check-double"></i> You`; senderSpan.onclick = (e) => { e.stopPropagation(); showUserProfile(msg.senderId); }; bubble.appendChild(senderSpan); } const textSpan = document.createElement('div'); textSpan.className = 'message-text'; let text = escapeHtml(msg.text); text = text.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" style="color:#2c6eb3;">$1</a>'); textSpan.innerHTML = text; bubble.appendChild(textSpan); if(msg.attachments && msg.attachments.length) msg.attachments.forEach(att => { const attDiv = document.createElement('div'); attDiv.className = 'attachment'; if(att.type==='image') attDiv.innerHTML = `<img src="${att.url}" style="max-width:100%; max-height:200px; border-radius:8px;">`; else if(att.type==='video') attDiv.innerHTML = `<video controls src="${att.url}" style="max-width:100%; max-height:200px;"></video>`; else if(att.type==='audio') attDiv.innerHTML = `<audio controls src="${att.url}"></audio>`; else attDiv.innerHTML = `<i class="fas fa-file-alt"></i> <a href="${att.url}" download="${att.name}">${att.name}</a>`; bubble.appendChild(attDiv); }); const timeSpan = document.createElement('div'); timeSpan.className = 'message-time'; if(msg.timestamp) timeSpan.innerText = formatMessageTime(msg.timestamp); bubble.appendChild(timeSpan); if(isSelf) { const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions'; actionsDiv.innerHTML = `<button class="edit-msg"><i class="fas fa-edit"></i></button><button class="delete-msg"><i class="fas fa-trash-alt"></i></button>`; actionsDiv.querySelector('.edit-msg').onclick = (e) => { e.stopPropagation(); const newText = prompt("Edit message:", msg.text); if(newText && newText.trim()) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(doc.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(doc.id); })(); ref.update({ text: newText.trim() }); } }; actionsDiv.querySelector('.delete-msg').onclick = async (e) => { e.stopPropagation(); if(confirm("Delete message?")) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(doc.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(doc.id); })(); await ref.delete(); } }; bubble.appendChild(actionsDiv); } row.appendChild(bubble); container.appendChild(row); }); container.scrollTop = container.scrollHeight; // Reset unread count again after displaying new messages (keeps badge off while chat is open)
-      await resetUnreadCount(currentChat.type, currentChat.id);
-      renderChatList(); // update sidebar to reflect zero unread
-    }); showChatView(); }
+
+  async function sendMessage(text, attachments) { 
+    if(!currentChat.id || !currentUser) return; 
+    if(!text.trim() && (!attachments || attachments.length===0)) return; 
+    const msgText = text.trim(); 
+    const msg = { 
+      text: msgText, 
+      senderId: currentUser.uid, 
+      senderName: currentUserData?.displayName || currentUser.email, 
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+      attachments: attachments || [],
+      status: 'sent'
+    }; 
+    let members = []; 
+    if(currentChat.type === 'group') { 
+      const groupSnap = await db.collection("groups").doc(currentChat.id).get(); 
+      members = groupSnap.data()?.members || []; 
+      await db.collection("groups").doc(currentChat.id).collection("messages").add(msg); 
+    } else { 
+      const ids = [currentUser.uid, currentChat.id].sort(); 
+      const convId = ids.join('_'); 
+      await db.collection("privateMessages").doc(convId).collection("messages").add(msg); 
+      members = [currentUser.uid, currentChat.id]; 
+    } 
+    const previewText = msgText || (attachments && attachments[0]?.name) || '📎 Attachment';
+    await updateLastMessage(currentChat.type, currentChat.id, previewText, msg.senderName);
+    await updateUnreadCount(currentChat.type, currentChat.id, members, currentUser.uid);
+    const inputField = document.getElementById('desktopMessageInput');
+    if(inputField) inputField.value = '';
+  }
+
+  async function updateMessageStatus(chatType, chatId, messageId, newStatus) {
+    if(chatType === 'group') return;
+    const ids = [currentUser.uid, chatId].sort();
+    const convId = ids.join('_');
+    const msgRef = db.collection("privateMessages").doc(convId).collection("messages").doc(messageId);
+    await msgRef.update({ status: newStatus }).catch(e => console.warn(e));
+  }
+
+  async function openChat(type, id) { 
+    if(!currentUser) return; 
+    if(messagesUnsub) messagesUnsub(); 
+    if(typingUnsub) typingUnsub(); 
+    currentChat = { type, id }; 
+    await resetUnreadCount(type, id); 
+    renderChatList(); 
+    let title = ''; 
+    if(type==='group') { const snap=await db.collection("groups").doc(id).get(); title=snap.exists?snap.data().name:'Group'; } 
+    else { const snap=await db.collection("users").doc(id).get(); title=snap.exists?(snap.data().displayName||id):id; } 
+    const header = document.getElementById('desktopChatHeader'); 
+    if(header) header.innerHTML = `<i class="${type==='group'?'fas fa-users':'fas fa-user'}"></i> ${escapeHtml(title)}`; 
+    const membersBtn = document.getElementById('membersBtn'); 
+    if(membersBtn) { membersBtn.style.display = type==='group' ? 'flex' : 'none'; if(type==='group') membersBtn.onclick = () => showGroupMembers(id); } 
+    if(type!=='group' && header) header.onclick = () => showUserProfile(id); 
+    let messagesRef; 
+    if(type==='group') messagesRef = db.collection("groups").doc(id).collection("messages").orderBy("timestamp","asc"); 
+    else { const ids=[currentUser.uid,id].sort(); const convId=ids.join('_'); messagesRef = db.collection("privateMessages").doc(convId).collection("messages").orderBy("timestamp","asc"); } 
+    messagesUnsub = messagesRef.onSnapshot(async (snap) => { 
+      const container = document.getElementById('desktopChatMessages'); 
+      if(!container) return;
+      container.innerHTML = ''; 
+      const processedStatus = new Set();
+      for (const doc of snap.docs) {
+        const msg = doc.data(); 
+        const isSelf = msg.senderId === currentUser.uid; 
+        const messageId = doc.id;
+        const row = document.createElement('div'); 
+        row.className = `message-row ${isSelf?'sent':'received'}`; 
+        const bubble = document.createElement('div'); 
+        bubble.className = 'message-bubble'; 
+        if (currentChat.type === 'group') { 
+          const senderSpan = document.createElement('div'); senderSpan.className = 'sender-name'; 
+          if (!isSelf) senderSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.senderName || msg.senderId)}`; 
+          else senderSpan.innerHTML = `<i class="fas fa-check-double"></i> You`; 
+          senderSpan.onclick = (e) => { e.stopPropagation(); showUserProfile(msg.senderId); };
+          bubble.appendChild(senderSpan); 
+        } else if(!isSelf) {
+          bubble.style.cursor = 'pointer';
+          bubble.onclick = () => showUserProfile(msg.senderId);
+        }
+        const textSpan = document.createElement('div'); textSpan.className = 'message-text'; 
+        let text = escapeHtml(msg.text); 
+        text = text.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" style="color:#2c6eb3;">$1</a>'); 
+        textSpan.innerHTML = text; 
+        bubble.appendChild(textSpan); 
+        if(msg.attachments && msg.attachments.length){ 
+          msg.attachments.forEach(att => { 
+            const attDiv = document.createElement('div'); attDiv.className = 'attachment'; 
+            if(att.type==='image') attDiv.innerHTML = `<img src="${att.url}" style="max-width:100%; max-height:200px; border-radius:8px;">`; 
+            else if(att.type==='video') attDiv.innerHTML = `<video controls src="${att.url}" style="max-width:100%; max-height:200px;"></video>`; 
+            else if(att.type==='audio') attDiv.innerHTML = `<audio controls src="${att.url}"></audio>`; 
+            else attDiv.innerHTML = `<i class="fas fa-file-alt"></i> <a href="${att.url}" download="${att.name}">${att.name}</a>`; 
+            bubble.appendChild(attDiv); 
+          }); 
+        } 
+        const timeSpan = document.createElement('div'); timeSpan.className = 'message-time'; 
+        if(msg.timestamp) timeSpan.innerText = formatMessageTime(msg.timestamp); 
+        // Status icons for sent messages
+        if(isSelf && currentChat.type !== 'group') {
+          const statusSpan = document.createElement('span'); statusSpan.className = 'status-icons';
+          const currentStatus = msg.status || 'sent';
+          if (currentStatus === 'sent') {
+            statusSpan.innerHTML = '<i class="fas fa-check sent"></i>';
+          } else if (currentStatus === 'delivered') {
+            statusSpan.innerHTML = '<i class="fas fa-check delivered"></i><i class="fas fa-check delivered"></i>';
+          } else if (currentStatus === 'read') {
+            statusSpan.innerHTML = '<i class="fas fa-check read"></i><i class="fas fa-check read"></i>';
+          }
+          timeSpan.appendChild(statusSpan);
+        }
+        bubble.appendChild(timeSpan);
+        if(isSelf) {
+          const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions';
+          actionsDiv.innerHTML = `<button class="edit-msg"><i class="fas fa-edit"></i></button><button class="delete-msg"><i class="fas fa-trash-alt"></i></button>`;
+          actionsDiv.querySelector('.edit-msg').onclick = (e) => { e.stopPropagation(); const newText = prompt("Edit message:", msg.text); if(newText && newText.trim()) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(messageId) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(messageId); })(); ref.update({ text: newText.trim() }); } };
+          actionsDiv.querySelector('.delete-msg').onclick = async (e) => { e.stopPropagation(); if(confirm("Delete message?")) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(messageId) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(messageId); })(); await ref.delete(); } };
+          bubble.appendChild(actionsDiv);
+        }
+        row.appendChild(bubble); 
+        container.appendChild(row); 
+        // ---- STATUS UPDATE for received messages ----
+        if (!isSelf && currentChat.type !== 'group' && !processedStatus.has(messageId)) {
+          processedStatus.add(messageId);
+          // Immediately mark as delivered if still sent
+          if (msg.status === 'sent') {
+            await updateMessageStatus(currentChat.type, currentChat.id, messageId, 'delivered');
+            // Then after a short delay, mark as read
+            setTimeout(() => {
+              updateMessageStatus(currentChat.type, currentChat.id, messageId, 'read');
+            }, 1200);
+          } else if (msg.status === 'delivered') {
+            // Already delivered, mark as read after delay
+            setTimeout(() => {
+              updateMessageStatus(currentChat.type, currentChat.id, messageId, 'read');
+            }, 800);
+          }
+        }
+      }
+      container.scrollTop = container.scrollHeight; 
+      await resetUnreadCount(type, id); 
+      renderChatList(); 
+    }); 
+    showChatView(); 
+  }
+
   async function startPrivateChat(otherUserId) { const ids=[currentUser.uid, otherUserId].sort(); await db.collection("privateMessages").doc(ids.join('_')).set({ participants: [currentUser.uid, otherUserId], unreadCounts: {}, typing: {} }, { merge: true }); await db.collection("privateChats").doc(currentUser.uid).set({ [otherUserId]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); await db.collection("privateChats").doc(otherUserId).set({ [currentUser.uid]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); }
-  async function sendMessage(text, attachments) { if(!currentChat.id || !currentUser) return; if(!text.trim() && (!attachments || attachments.length===0)) return; const msgText = text.trim(); const msg = { text: msgText, senderId: currentUser.uid, senderName: currentUserData?.displayName || currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp(), attachments: attachments || [] }; let members = []; if(currentChat.type === 'group') { const groupSnap = await db.collection("groups").doc(currentChat.id).get(); members = groupSnap.data()?.members || []; await db.collection("groups").doc(currentChat.id).collection("messages").add(msg); } else { const ids = [currentUser.uid, currentChat.id].sort(); await db.collection("privateMessages").doc(ids.join('_')).collection("messages").add(msg); members = [currentUser.uid, currentChat.id]; } const previewText = msgText || (attachments && attachments[0]?.name) || '📎 Attachment'; await updateLastMessage(currentChat.type, currentChat.id, previewText, msg.senderName); await updateUnreadCount(currentChat.type, currentChat.id, members, currentUser.uid); const inputField = document.getElementById('desktopMessageInput'); if(inputField) inputField.value = ''; }
   async function createGroup(name, memberIds) { if (!currentUser) return null; const existingGroupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get(); let duplicate = false; existingGroupsSnap.forEach(doc => { if (doc.data().name.toLowerCase() === name.toLowerCase()) duplicate = true; }); if (duplicate) { await alert(`Group "${name}" already exists`); return null; } const groupRef = db.collection("groups").doc(); await groupRef.set({ name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], createdAt: firebase.firestore.FieldValue.serverTimestamp(), unreadCounts: {}, typing: {}, lastMessage: '', lastMessageTime: null }); return groupRef.id; }
-  function setLoggedOutUI(){ currentUser=null; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); if(chatsUnsubPrivate) chatsUnsubPrivate(); currentChat={type:null,id:null}; const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'; authBtn.onclick=()=>document.getElementById('authModal').style.display='flex'; } const profileContainer = document.getElementById('desktopProfileAvatar'); if(profileContainer) profileContainer.innerHTML='<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>'; const chatListDiv = document.getElementById('desktopChatList'); if(chatListDiv) chatListDiv.innerHTML='<div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome</h3><p>Sign in to start</p></div>'; const headerDiv = document.getElementById('desktopChatHeader'); if(headerDiv) headerDiv.innerHTML='Select a chat'; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) membersBtn.style.display='none'; const messagesDiv = document.getElementById('desktopChatMessages'); if(messagesDiv) messagesDiv.innerHTML='<div class="welcome-placeholder"><i class="fas fa-lock"></i><h3>Private chats</h3><p>Sign in to view messages</p></div>'; const typingSpan = document.getElementById('typingIndicator'); if(typingSpan) typingSpan.innerText = ''; const inputArea = document.querySelector('.input-area'); if(inputArea) inputArea.style.display='none'; const fab = document.getElementById('desktopFabPlus'); if(fab) fab.style.display='none'; const toolsBtn = document.getElementById('floatingToolsBtn'); if(toolsBtn) toolsBtn.style.display='none'; const msgInput = document.getElementById('desktopMessageInput'); if(msgInput) msgInput.disabled = true; showChatListView(); }
-  async function setLoggedInUI(user){ currentUser=user; await ensureUserDocument(user); subscribeToChatList(); await renderChatList(); showChatListView(); const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-out-alt"></i>'; authBtn.onclick=async()=>{ await auth.signOut(); setLoggedOutUI(); }; } const inputArea = document.querySelector('.input-area'); if(inputArea) inputArea.style.display='flex'; const fab = document.getElementById('desktopFabPlus'); if(fab) fab.style.display='flex'; const toolsBtn = document.getElementById('floatingToolsBtn'); if(toolsBtn) toolsBtn.style.display='flex'; const msgInput = document.getElementById('desktopMessageInput'); if(msgInput) msgInput.disabled = false; renderProfileAvatar(); }
-  auth.onAuthStateChanged(async(user)=>{ if(user){ const authModal = document.getElementById('authModal'); if(authModal) authModal.style.display='none'; await setLoggedInUI(user); } else setLoggedOutUI(); });
+
+  function setLoggedOutUI(){ currentUser=null; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); if(chatsUnsubPrivate) chatsUnsubPrivate(); currentChat={type:null,id:null}; const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'; authBtn.onclick=()=>document.getElementById('authModal').style.display='flex'; } document.getElementById('desktopProfileAvatar').innerHTML='<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>'; document.getElementById('desktopChatList').innerHTML='<div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome</h3><p>Sign in to start</p></div>'; document.getElementById('desktopChatHeader').innerHTML='Select a chat'; document.getElementById('membersBtn').style.display='none'; document.getElementById('desktopChatMessages').innerHTML='<div class="welcome-placeholder"><i class="fas fa-lock"></i><h3>Private chats</h3><p>Sign in to view messages</p></div>'; document.getElementById('typingIndicator').innerText = ''; document.querySelector('.input-area').style.display='none'; document.getElementById('desktopFabPlus').style.display='none'; document.getElementById('floatingToolsBtn').style.display='none'; document.getElementById('desktopMessageInput').disabled = true; showChatListView(); }
+  async function setLoggedInUI(user){ currentUser=user; await ensureUserDocument(user); subscribeToChatList(); await renderChatList(); showChatListView(); const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-out-alt"></i>'; authBtn.onclick=async()=>{ await auth.signOut(); setLoggedOutUI(); }; } document.querySelector('.input-area').style.display='flex'; document.getElementById('desktopFabPlus').style.display='flex'; document.getElementById('floatingToolsBtn').style.display='flex'; document.getElementById('desktopMessageInput').disabled = false; renderProfileAvatar(); }
+  auth.onAuthStateChanged(async(user)=>{ if(user){ document.getElementById('authModal').style.display='none'; await setLoggedInUI(user); } else setLoggedOutUI(); });
   async function showGroupMembers(groupId) { const groupDoc = await db.collection("groups").doc(groupId).get(); if(!groupDoc.exists) return; const members = groupDoc.data().members || []; const container = document.getElementById('membersListContainer'); if(!container) return; container.innerHTML = ''; for(let uid of members) { const userDoc = await db.collection("users").doc(uid).get(); const name = userDoc.exists ? (userDoc.data().displayName || uid) : uid; const avatar = userDoc.exists ? (userDoc.data().avatarURL || 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png') : 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png'; const item = document.createElement('div'); item.className = 'member-item'; item.innerHTML = `<img src="${avatar}" style="width:40px; height:40px; border-radius:50%;"><div><strong>${escapeHtml(name)}</strong><br><span style="font-size:12px; color:#6b7b8c;">${uid === currentUser.uid ? 'You' : ''}</span></div>`; item.onclick = () => { document.getElementById('membersModal').style.display = 'none'; showUserProfile(uid); }; container.appendChild(item); } document.getElementById('membersModal').style.display = 'flex'; }
 
-  // ======================= TOOLS SECTION =======================
+  // Tools (calculator, currency, reader, brick breaker) – slower game speed
   function showToolsMenu() { const modal = document.getElementById('toolsModal'); const inner = document.getElementById('toolsSubmenuInner'); if(!modal || !inner) return; inner.innerHTML = `<div class="tools-item" data-tool="games"><i class="fas fa-gamepad"></i> 🎮 Brick Breaker</div><div class="tools-item" data-tool="calc"><i class="fas fa-calculator"></i> 🧮 Calculator</div><div class="tools-item" data-tool="currency"><i class="fas fa-exchange-alt"></i> 💱 Exchange Rates</div><div class="tools-item" data-tool="reader"><i class="fas fa-book-reader"></i> 📖 Whisp Reader (PDF/EPUB)</div>`; modal.style.display = 'flex'; inner.querySelectorAll('.tools-item').forEach(el => { el.addEventListener('click', () => { modal.style.display = 'none'; const tool = el.dataset.tool; if(tool === 'games') showGamesModal(); else if(tool === 'calc') showCalculatorModal(); else if(tool === 'currency') showCurrencyModal(); else if(tool === 'reader') showReaderModal(); }); }); document.getElementById('closeToolsModalBtn').onclick = () => modal.style.display = 'none'; }
   function showCalculatorModal() { const modal = document.getElementById('calculatorModal'); const screen = document.getElementById('calcScreen'); let current = '0', operator = null, prev = null; const updateScreen = () => { if(screen) screen.innerText = current; }; const compute = () => { if(operator && prev !== null) { const a = parseFloat(prev), b = parseFloat(current); if(operator === '+') current = (a+b).toString(); else if(operator === '-') current = (a-b).toString(); else if(operator === '*') current = (a*b).toString(); else if(operator === '/') current = (a/b).toString(); operator = null; prev = null; updateScreen(); } }; const btns = ['7','8','9','/','4','5','6','*','1','2','3','-','0','C','=','+']; const container = document.getElementById('calcButtons'); if(!container) return; container.innerHTML = ''; btns.forEach(btn => { const b = document.createElement('button'); b.innerText = btn; b.className = 'calc-btn' + (['/','*','-','+','='].includes(btn) ? ' operator' : ''); b.onclick = () => { if(btn === 'C') { current = '0'; operator = null; prev = null; updateScreen(); } else if(btn === '=') { compute(); } else if(['+','-','*','/'].includes(btn)) { if(operator && prev === null) operator = btn; else { compute(); operator = btn; prev = current; current = '0'; } } else { if(current === '0') current = btn; else current += btn; updateScreen(); } }; container.appendChild(b); }); modal.style.display = 'flex'; document.getElementById('closeCalcModalBtn').onclick = () => modal.style.display = 'none'; }
-  
-  // Exchange rate using fawazahmed0/exchange-api
-  async function fetchExchangeRate(base, target) {
-    const primaryUrl = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.json`;
-    const fallbackUrl = `https://latest.currency-api.pages.dev/v1/currencies/${base.toLowerCase()}.json`;
-    try {
-      const response = await fetch(primaryUrl);
-      if (!response.ok) throw new Error('Primary failed');
-      const data = await response.json();
-      return data[base.toLowerCase()]?.[target.toLowerCase()];
-    } catch (err) {
-      console.warn('Primary API failed, using fallback', err);
-      try {
-        const fallbackRes = await fetch(fallbackUrl);
-        if (!fallbackRes.ok) throw new Error('Fallback failed');
-        const fallbackData = await fallbackRes.json();
-        return fallbackData[base.toLowerCase()]?.[target.toLowerCase()];
-      } catch (fallbackErr) {
-        console.error('Fallback also failed', fallbackErr);
-        return null;
-      }
-    }
-  }
-  async function showCurrencyModal() {
-    const modal = document.getElementById('currencyModal');
-    modal.style.display = 'flex';
-    const fromSel = document.getElementById('fromCurrency');
-    const toSel = document.getElementById('toCurrency');
-    const amountInput = document.getElementById('amountInput');
-    const resultField = document.getElementById('convertedResult');
-    const rateInfo = document.getElementById('rateInfo');
-    const convert = async () => {
-      const from = fromSel.value, to = toSel.value;
-      const amount = parseFloat(amountInput.value) || 0;
-      if (!from || !to) return;
-      rateInfo.innerText = 'Fetching exchange rate...';
-      const rate = await fetchExchangeRate(from, to);
-      if (rate !== null && rate !== undefined) {
-        const converted = amount * rate;
-        resultField.value = converted.toFixed(2);
-        rateInfo.innerText = `1 ${from} = ${rate.toFixed(4)} ${to} (source: fawazahmed0/exchange-api)`;
-      } else {
-        resultField.value = "Error";
-        rateInfo.innerText = "Failed to fetch exchange rate. Please try again later.";
-      }
-    };
-    const commonCurrencies = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "INR", "NGN", "BRL", "MXN", "KRW", "TRY", "ZAR"];
-    fromSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join('');
-    toSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join('');
-    fromSel.value = "USD";
-    toSel.value = "EUR";
-    document.getElementById('convertCurrencyBtn').onclick = convert;
-    document.getElementById('closeCurrencyModalBtn').onclick = () => modal.style.display = 'none';
-    await convert();
-  }
+  async function fetchExchangeRate(base, target) { const primaryUrl = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.json`; const fallbackUrl = `https://latest.currency-api.pages.dev/v1/currencies/${base.toLowerCase()}.json`; try { const response = await fetch(primaryUrl); if (!response.ok) throw new Error('Primary failed'); const data = await response.json(); return data[base.toLowerCase()]?.[target.toLowerCase()]; } catch (err) { try { const fallbackRes = await fetch(fallbackUrl); if (!fallbackRes.ok) throw new Error('Fallback failed'); const fallbackData = await fallbackRes.json(); return fallbackData[base.toLowerCase()]?.[target.toLowerCase()]; } catch (fallbackErr) { return null; } } }
+  async function showCurrencyModal() { const modal = document.getElementById('currencyModal'); modal.style.display = 'flex'; const fromSel = document.getElementById('fromCurrency'); const toSel = document.getElementById('toCurrency'); const amountInput = document.getElementById('amountInput'); const resultField = document.getElementById('convertedResult'); const rateInfo = document.getElementById('rateInfo'); const convert = async () => { const from = fromSel.value, to = toSel.value; const amount = parseFloat(amountInput.value) || 0; if (!from || !to) return; rateInfo.innerText = 'Fetching exchange rate...'; const rate = await fetchExchangeRate(from, to); if (rate !== null) { const converted = amount * rate; resultField.value = converted.toFixed(2); rateInfo.innerText = `1 ${from} = ${rate.toFixed(4)} ${to} (source: fawazahmed0/exchange-api)`; } else { resultField.value = "Error"; rateInfo.innerText = "Failed to fetch."; } }; const commonCurrencies = ["USD","EUR","GBP","JPY","CAD","AUD","CHF","CNY","INR","NGN","BRL","MXN","KRW","TRY","ZAR"]; fromSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join(''); toSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join(''); fromSel.value = "USD"; toSel.value = "EUR"; document.getElementById('convertCurrencyBtn').onclick = convert; document.getElementById('closeCurrencyModalBtn').onclick = () => modal.style.display = 'none'; await convert(); }
   let currentReaderRendition = null;
-  function showReaderModal() { const modal = document.getElementById('readerModal'); const viewerDiv = document.getElementById('readerViewer'); const fileInput = document.getElementById('readerFileInput'); viewerDiv.innerHTML = '📖 Select a PDF or EPUB file to start reading'; fileInput.value = ''; fileInput.onchange = async (e) => { const file = e.target.files[0]; if(!file) return; const url = URL.createObjectURL(file); viewerDiv.innerHTML = '<div style="text-align:center">Loading document...</div>'; if(file.name.endsWith('.pdf')) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; const loadingTask = pdfjsLib.getDocument(url); const pdf = await loadingTask.promise; let allText = ''; for(let i=1; i<=pdf.numPages; i++) { const page = await pdf.getPage(i); const textContent = await page.getTextContent(); const strings = textContent.items.map(item => item.str).join(' '); allText += `<p><strong>Page ${i}</strong><br>${escapeHtml(strings)}</p><hr>`; } viewerDiv.innerHTML = allText || '<i>No extractable text</i>'; } else if(file.name.endsWith('.epub')) { try { if(currentReaderRendition) currentReaderRendition.destroy(); const book = ePub(url); const rendition = book.renderTo("readerViewer", { width: "100%", height: "100%" }); rendition.display(); currentReaderRendition = rendition; viewerDiv.innerHTML = ''; viewerDiv.appendChild(rendition.renderer.viewer); } catch(err) { viewerDiv.innerHTML = 'EPUB rendering error: '+err.message; } } else { viewerDiv.innerHTML = 'Unsupported format. Use PDF or EPUB.'; } }; modal.style.display = 'flex'; document.getElementById('closeReaderModalBtn').onclick = () => { if(currentReaderRendition) currentReaderRendition.destroy(); modal.style.display = 'none'; }; }
-  
-  // Brick Breaker Game - slower version (reduced speeds)
+  function showReaderModal() { const modal = document.getElementById('readerModal'); const viewerDiv = document.getElementById('readerViewer'); const fileInput = document.getElementById('readerFileInput'); viewerDiv.innerHTML = '📖 Select a PDF or EPUB file to start reading'; fileInput.value = ''; fileInput.onchange = async (e) => { const file = e.target.files[0]; if(!file) return; const url = URL.createObjectURL(file); viewerDiv.innerHTML = '<div style="text-align:center">Loading document...</div>'; if(file.name.endsWith('.pdf')) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; const loadingTask = pdfjsLib.getDocument(url); const pdf = await loadingTask.promise; let allText = ''; for(let i=1; i<=pdf.numPages; i++) { const page = await pdf.getPage(i); const textContent = await page.getTextContent(); const strings = textContent.items.map(item => item.str).join(' '); allText += `<p><strong>Page ${i}</strong><br>${escapeHtml(strings)}</p><hr>`; } viewerDiv.innerHTML = allText || '<i>No extractable text</i>'; } else if(file.name.endsWith('.epub')) { try { if(currentReaderRendition) currentReaderRendition.destroy(); const book = ePub(url); const rendition = book.renderTo("readerViewer", { width: "100%", height: "100%" }); rendition.display(); currentReaderRendition = rendition; viewerDiv.innerHTML = ''; viewerDiv.appendChild(rendition.renderer.viewer); } catch(err) { viewerDiv.innerHTML = 'EPUB rendering error: '+err.message; } } else { viewerDiv.innerHTML = 'Unsupported format.'; } }; modal.style.display = 'flex'; document.getElementById('closeReaderModalBtn').onclick = () => { if(currentReaderRendition) currentReaderRendition.destroy(); modal.style.display = 'none'; }; }
   let gameAnimationId=null;
   function showGamesModal(){ if(!currentUser){ alert("Sign in to play"); return; } if(gameAnimationId) cancelAnimationFrame(gameAnimationId); const modal=document.createElement('div'); modal.className='modal'; modal.style.display='flex'; modal.innerHTML=`<div class="modal-card"><h3><i class="fas fa-gamepad"></i> Brick Breaker · Level <span id="levelNum">1</span>/7</h3><div class="game-container"><canvas id="brickCanvas" width="700" height="450" style="width:100%; max-width:700px; aspect-ratio:700/450"></canvas><div class="game-stats"><div>💥 Score: <span id="gameScore">0</span></div><div>❤️ Lives: <span id="gameLives">3</span></div><div>🏆 Level: <span id="gameLevel">1</span></div></div><div class="game-controls"><button id="restartGameBtn" class="game-btn">🔄 Restart</button><button id="closeGameModalBtn" class="game-btn">✖ Close</button></div></div></div>`; document.body.appendChild(modal); const canvas=modal.querySelector('#brickCanvas'), ctx=canvas.getContext('2d'); let gameRunning=true,score=0,lives=3,currentLevel=1; let ball={x:canvas.width/2,y:canvas.height-50,dx:2.6,dy:-3.0,radius:6}; let paddle={width:90,height:12,x:(canvas.width-90)/2}; let bricks=[]; const brickRowColors=['#FF5252','#FFC107','#4CAF50','#2196F3','#9C27B0','#FF9800','#E91E63']; let rightPressed=false,leftPressed=false,mouseX=0; function initLevel(level){ bricks=[]; const rows=Math.min(3+level,9), bricksPerRow=9, brickWidth=(canvas.width-40)/bricksPerRow, brickHeight=18; for(let r=0;r<rows;r++) for(let c=0;c<bricksPerRow;c++) bricks.push({x:20+c*brickWidth,y:50+r*(brickHeight+4),w:brickWidth-2,h:brickHeight,status:1,color:brickRowColors[r%brickRowColors.length]}); let speed=2.6+(level-1)*0.12; ball.dx=ball.dx>0?speed:-speed; ball.dy=-Math.abs(ball.dy); if(ball.dy>-2.7) ball.dy=-2.7; } function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); bricks.forEach(b=>{ if(b.status){ ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle='#ffffff80'; ctx.strokeRect(b.x,b.y,b.w,b.h); } }); ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fillStyle='#FFD966'; ctx.fill(); ctx.fillStyle='#4a90e2'; ctx.fillRect(paddle.x,canvas.height-paddle.height-5,paddle.width,paddle.height); } async function update(){ if(!gameRunning) return; ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x+ball.radius>canvas.width||ball.x-ball.radius<0) ball.dx=-ball.dx; if(ball.y-ball.radius<0) ball.dy=-ball.dy; if(ball.y+ball.radius>canvas.height){ lives--; document.getElementById('gameLives').innerText=lives; if(lives<=0){ gameRunning=false; alert('Game Over'); return; } ball.x=canvas.width/2; ball.y=canvas.height-50; ball.dx=ball.dx>0?2.6:-2.6; ball.dy=-2.8; paddle.x=(canvas.width-paddle.width)/2; } if(ball.y+ball.radius>=canvas.height-paddle.height-5 && ball.x+ball.radius>paddle.x && ball.x-ball.radius<paddle.x+paddle.width){ let hitPos=(ball.x-paddle.x)/paddle.width; let angle=(hitPos-0.5)*0.9; ball.dx=angle*4.2; ball.dy=-Math.abs(ball.dy); } let allCleared=true; for(let i=0;i<bricks.length;i++){ let b=bricks[i]; if(b.status){ allCleared=false; if(ball.x+ball.radius>b.x && ball.x-ball.radius<b.x+b.w && ball.y+ball.radius>b.y && ball.y-ball.radius<b.y+b.h){ b.status=0; score+=10; document.getElementById('gameScore').innerText=score; let overlapL=(ball.x+ball.radius)-b.x, overlapR=(b.x+b.w)-(ball.x-ball.radius), overlapT=(ball.y+ball.radius)-b.y, overlapB=(b.y+b.h)-(ball.y-ball.radius); if(Math.min(overlapL,overlapR)<Math.min(overlapT,overlapB)) ball.dx=-ball.dx; else ball.dy=-ball.dy; break; } } } if(allCleared){ if(currentLevel<7){ currentLevel++; document.getElementById('levelNum').innerText=currentLevel; document.getElementById('gameLevel').innerText=currentLevel; score+=50; document.getElementById('gameScore').innerText=score; initLevel(currentLevel); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; } else { gameRunning=false; alert('🎉 Victory!'); modal.remove(); return; } } if(rightPressed && paddle.x<canvas.width-paddle.width) paddle.x+=6; if(leftPressed && paddle.x>0) paddle.x-=6; if(mouseX>0){ let nx=mouseX-paddle.width/2; if(nx<0) nx=0; if(nx>canvas.width-paddle.width) nx=canvas.width-paddle.width; paddle.x=nx; } draw(); gameAnimationId=requestAnimationFrame(update); } function handleMouseMove(e){ const rect=canvas.getBoundingClientRect(); const scaleX=canvas.width/rect.width; let clientX=e.touches?e.touches[0].clientX:e.clientX; mouseX=(clientX-rect.left)*scaleX; } function handleKeyDown(e){ if(e.key==='ArrowRight') rightPressed=true; else if(e.key==='ArrowLeft') leftPressed=true; } function handleKeyUp(e){ if(e.key==='ArrowRight') rightPressed=false; else if(e.key==='ArrowLeft') leftPressed=false; } window.addEventListener('keydown',handleKeyDown); window.addEventListener('keyup',handleKeyUp); canvas.addEventListener('mousemove',handleMouseMove); canvas.addEventListener('touchmove',handleMouseMove); initLevel(1); update(); modal.querySelector('#restartGameBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); score=0; lives=3; currentLevel=1; document.getElementById('gameScore').innerText=0; document.getElementById('gameLives').innerText=3; document.getElementById('gameLevel').innerText=1; document.getElementById('levelNum').innerText=1; gameRunning=true; initLevel(1); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; update(); }; modal.querySelector('#closeGameModalBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); window.removeEventListener('keydown',handleKeyDown); window.removeEventListener('keyup',handleKeyUp); modal.remove(); }; modal.addEventListener('click',(e)=>{ if(e.target===modal){ cancelAnimationFrame(gameAnimationId); modal.remove(); } }); }
-  
+
   // Event listeners
   document.getElementById('floatingToolsBtn').onclick = showToolsMenu;
   document.getElementById('desktopSendBtn').onclick = () => { const inp = document.getElementById('desktopMessageInput'); if(inp && inp.value.trim()) sendMessage(inp.value, []); };
