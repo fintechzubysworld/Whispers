@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Whispers · Real‑time Chat</title>
+  <title>Whispers · Real‑time Chat + Tools</title>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+  <!-- PDF.js & EPUB.js for Whisp Reader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -37,11 +40,8 @@
     .unread-badge { background: var(--unread-badge); color: white; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: bold; margin-left: 8px; }
     .section-header { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px 6px; color: #6b7b8c; border-bottom: 1px solid var(--border-color); margin-top: 8px; }
     .fab-plus { position: absolute; bottom: 20px; right: 20px; width: 54px; height: 54px; background: var(--send-btn-bg); color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 10; }
-    .floating-game-menu { position: absolute; bottom: 90px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 6px 16px rgba(0,0,0,0.1); display: flex; flex-direction: column; padding: 8px; gap: 8px; z-index: 12; }
-    .game-menu-btn { background: transparent; border: none; width: 46px; height: 46px; border-radius: 50%; font-size: 24px; cursor: pointer; color: #2c6eb3; }
-    .plus-menu { position: absolute; bottom: 90px; right: 20px; background: white; border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); overflow: hidden; z-index: 25; min-width: 180px; }
-    .plus-menu-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; }
-    .plus-menu-item:hover { background: var(--sidebar-hover); }
+    .floating-tools-btn { position: absolute; bottom: 90px; right: 20px; width: 54px; height: 54px; background: #6c5ce7; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 10; transition: 0.2s; }
+    .floating-tools-btn:hover { background: #5a4ad1; transform: scale(1.02); }
     .main-chat { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--chat-bg); background-image: radial-gradient(circle at 10% 30%, rgba(74,144,226,0.08) 2%, transparent 2.5%); }
     .chat-header { background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; color: var(--header-text); }
     .back-button { background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 40px; cursor: pointer; display: none; font-size: 18px; }
@@ -57,34 +57,26 @@
     .sent .message-bubble { background: var(--sent-bubble); border-bottom-right-radius: 6px; color: var(--sent-bubble-text); }
     .received .message-bubble { background: var(--received-bubble); border-bottom-left-radius: 6px; color: var(--received-bubble-text); }
     .sender-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; color: #2c6eb3; cursor: pointer; }
-    .sender-name:hover { text-decoration: underline; }
     .message-text { font-size: 14px; line-height: 1.4; word-break: break-word; }
     .attachment { margin-top: 8px; background: rgba(0,0,0,0.05); border-radius: 12px; padding: 8px; display: flex; align-items: center; gap: 8px; }
     .message-time { font-size: 10px; color: var(--time-color); margin-top: 6px; text-align: right; letter-spacing: 0.2px; opacity: 0.75; }
-    .message-actions { position: absolute; right: 8px; top: -20px; background: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; gap: 8px; padding: 4px 8px; z-index: 5; }
-    .message-row:hover .message-actions { display: flex; }
-    .message-actions button { background: none; border: none; cursor: pointer; font-size: 12px; color: #4a90e2; padding: 2px; }
-    .message-actions button:hover { color: #2c6eb3; }
     .input-area { background: var(--input-area-bg); padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); }
     .input-area input { flex: 1; border: none; background: #f0f8ff; padding: 12px 18px; border-radius: 30px; font-size: 15px; outline: none; }
     .input-area button { background: var(--send-btn-bg); border: none; color: white; width: 44px; height: 44px; border-radius: 30px; cursor: pointer; font-size: 20px; }
     .attach-btn { background: #e0ecf5; color: #2c6eb3; width: auto; padding: 0 12px; }
     .welcome-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: #2c6eb3; padding: 20px; }
-    .welcome-placeholder i { font-size: 64px; margin-bottom: 20px; opacity: 0.7; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-    .modal-card { background: white; width: 500px; max-width: 90vw; border-radius: 28px; padding: 20px; text-align: center; max-height: 85vh; overflow-y: auto; }
-    .profile-card { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .member-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; max-height: 300px; overflow-y: auto; }
-    .member-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
-    .member-item:hover { background: var(--sidebar-hover); }
-    .custom-dialog-input { width: 100%; padding: 12px; margin: 16px 0; border: 1px solid var(--border-color); border-radius: 40px; font-size: 14px; outline: none; }
-    .profile-avatar-large { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
-    .avatar-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-    .avatar-option { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid transparent; }
-    .game-container { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
-    canvas { background: #0a1a2a; border-radius: 20px; width: 100%; height: auto; cursor: none; }
-    .game-stats { display: flex; justify-content: space-between; width: 100%; margin: 12px 0; font-weight: 600; background: #eef2f7; padding: 8px 16px; border-radius: 40px; }
-    .game-btn { background: #4a90e2; border: none; color: white; padding: 8px 18px; border-radius: 40px; cursor: pointer; }
+    .modal-card { background: white; width: 550px; max-width: 90vw; border-radius: 28px; padding: 20px; text-align: center; max-height: 85vh; overflow-y: auto; }
+    .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+    .calc-btn { background: #f0f4f9; border: none; padding: 14px; font-size: 20px; border-radius: 28px; cursor: pointer; font-weight: 600; }
+    .calc-btn.operator { background: #4a90e2; color: white; }
+    .calc-screen { background: #eef2f7; padding: 16px; border-radius: 32px; font-size: 28px; text-align: right; margin-bottom: 20px; font-weight: 500; }
+    .currency-row { display: flex; gap: 12px; margin: 12px 0; align-items: center; flex-wrap: wrap; }
+    .currency-select { flex: 1; padding: 12px; border-radius: 40px; border: 1px solid var(--border-color); background: white; }
+    .currency-input { flex: 2; padding: 12px; border-radius: 40px; border: 1px solid var(--border-color); }
+    .reader-container { border: 1px solid #ddd; border-radius: 20px; margin-top: 16px; height: 450px; overflow-y: auto; background: #fafafa; padding: 12px; }
+    .reader-viewer { width: 100%; height: 100%; background: white; overflow: auto; }
+    .game-container canvas { background: #0a1a2a; border-radius: 20px; width: 100%; height: auto; cursor: none; }
     @media (max-width: 768px) {
       .desktop-layout { flex-direction: column; }
       .sidebar { width: 100%; height: 100%; display: flex; }
@@ -94,6 +86,39 @@
       .back-button { display: flex; align-items: center; justify-content: center; }
     }
     @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .tools-submenu { background: white; border-radius: 28px; overflow: hidden; min-width: 240px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); }
+    .tools-item { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; font-weight: 500; border-bottom: 1px solid #ecf0f1; transition: 0.1s; }
+    .tools-item:hover { background: #e3f0fa; }
+    .tools-item i { width: 28px; font-size: 20px; color: #4a90e2; }
+    .member-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; max-height: 300px; overflow-y: auto; }
+    .member-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+    .profile-avatar-large { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+
+    /* Edit/delete actions only visible on hover */
+    .message-actions {
+      position: absolute;
+      right: 8px;
+      top: -20px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+      gap: 8px;
+      padding: 4px 8px;
+      z-index: 5;
+    }
+    .message-row:hover .message-actions {
+      display: flex;
+    }
+    .message-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: #4a90e2;
+      padding: 2px;
+    }
+    .message-actions button:hover { color: #2c6eb3; }
   </style>
 </head>
 <body>
@@ -102,7 +127,7 @@
     <div class="sidebar-header"><div style="display:flex; align-items:center; gap:10px;"><div id="desktopProfileAvatar"></div><h2>Whispers</h2></div><button id="authActionBtn" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Sign In</button></div>
     <div class="chat-list" id="desktopChatList"><div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome</h3><p>Sign in to chat</p></div></div>
     <button id="desktopFabPlus" class="fab-plus" style="display:none;"><i class="fas fa-plus"></i></button>
-    <div class="floating-game-menu" id="gameMenuDesktop" style="display:none;"><button class="game-menu-btn" id="desktopGamesBtn"><i class="fas fa-gamepad"></i></button></div>
+    <button id="floatingToolsBtn" class="floating-tools-btn" style="display:none;"><i class="fas fa-toolbox"></i></button>
   </div>
   <div class="main-chat">
     <div class="chat-header"><button id="mobileBackBtn" class="back-button"><i class="fas fa-arrow-left"></i></button><div class="chat-title" id="desktopChatHeader">Select a chat</div><button id="membersBtn" class="members-button" style="display:none;"><i class="fas fa-users"></i></button></div>
@@ -111,450 +136,128 @@
     <div class="input-area" style="display:none;"><button id="desktopAttachBtn" class="attach-btn"><i class="fas fa-paperclip"></i></button><input type="text" id="desktopMessageInput" placeholder="Aa" disabled><button id="desktopSendBtn"><i class="fas fa-paper-plane"></i></button></div>
   </div>
 </div></div>
+
+<!-- Modals -->
 <div id="authModal" class="modal"><div class="modal-card"><div style="display:flex; justify-content:center; margin-bottom:10px;"><div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#87CEEB,#FF69B4); display:flex; align-items:center; justify-content:center; font-size:30px; color:white;">W</div></div><h3>Whispers</h3><div id="authTabs" style="display:flex; gap:10px; margin-bottom:15px;"><button id="loginTab" style="background:#4a90e2;">Login</button><button id="signupTab">Sign Up</button></div><div id="loginPanel"><input type="email" id="loginUsername" placeholder="Email"><input type="password" id="loginPassword" placeholder="Password"><button id="doLoginBtn">Login</button><div style="margin-top:15px;"><hr><button id="googleLoginBtn" style="background:#db4437;"><i class="fab fa-google"></i> Google</button></div></div><div id="signupPanel" style="display:none;"><input type="email" id="signupUsername" placeholder="Email"><input type="password" id="signupPassword" placeholder="Password"><input type="text" id="signupDisplayName" placeholder="Display Name"><button id="doSignupBtn">Create Account</button></div><div id="authError" style="color:red; margin-top:10px;"></div><button id="closeModalBtn">Cancel</button></div></div>
 <div id="profileModal" class="modal"><div class="modal-card"><h3>User Profile</h3><div id="profileViewContent" class="profile-card"></div><button id="closeProfileModalBtn" class="game-btn" style="margin-top:16px;">Close</button></div></div>
 <div id="membersModal" class="modal"><div class="modal-card"><h3>Group Members</h3><div id="membersListContainer" class="member-list"></div><button id="closeMembersModalBtn" class="game-btn">Close</button></div></div>
+<div id="toolsModal" class="modal"><div class="modal-card" style="width: 350px; padding: 10px 0;"><div class="tools-submenu" id="toolsSubmenuInner"></div><button id="closeToolsModalBtn" class="game-btn" style="margin: 16px auto 8px; background: #aaa; display: block;">Close</button></div></div>
+<div id="calculatorModal" class="modal"><div class="modal-card"><h3><i class="fas fa-calculator"></i> Calculator</h3><div class="calc-screen" id="calcScreen">0</div><div class="calc-buttons" id="calcButtons"></div><button id="closeCalcModalBtn" class="game-btn">Close</button></div></div>
+<div id="currencyModal" class="modal"><div class="modal-card"><h3><i class="fas fa-exchange-alt"></i> Exchange Rate Converter</h3><div class="currency-row"><select id="fromCurrency" class="currency-select"></select><i class="fas fa-arrow-right"></i><select id="toCurrency" class="currency-select"></select></div><div class="currency-row"><input type="number" id="amountInput" class="currency-input" placeholder="Amount" value="1"><input type="text" id="convertedResult" class="currency-input" readonly placeholder="Result"></div><button id="convertCurrencyBtn" class="game-btn" style="margin-top: 12px;">Convert</button><div id="rateInfo" style="margin-top: 12px; font-size: 13px; color:#6b7b8c;"></div><button id="closeCurrencyModalBtn" class="game-btn" style="margin-top: 16px;">Close</button></div></div></div>
+<div id="readerModal" class="modal"><div class="modal-card" style="width: 800px; max-width: 95vw;"><h3><i class="fas fa-book-open"></i> Whisp Reader · PDF & EPUB</h3><input type="file" id="readerFileInput" accept=".pdf,.epub" style="margin: 12px 0; padding: 8px;"><div id="readerViewerContainer" class="reader-container"><div id="readerViewer" class="reader-viewer">📖 Select a PDF or EPUB file to start reading</div></div><button id="closeReaderModalBtn" class="game-btn" style="margin-top: 12px;">Close</button></div></div>
 
 <script>
-  // Custom Alert/Prompt (no origin prefix)
-  let activeDialogResolve = null, activeDialogElement = null;
-  function closeCustomDialog() { if (activeDialogElement) { activeDialogElement.remove(); activeDialogElement = null; } if (activeDialogResolve) { activeDialogResolve(null); activeDialogResolve = null; } }
-  function showAlert(message) { return new Promise((resolve) => { closeCustomDialog(); const modalDiv = document.createElement('div'); modalDiv.className = 'modal'; modalDiv.style.display = 'flex'; modalDiv.innerHTML = `<div class="modal-card" style="max-width: 400px;"><div style="display:flex; justify-content:center; margin-bottom:10px;"><div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#4a90e2,#2c6eb3); display:flex; align-items:center; justify-content:center; font-size:24px; color:white;">!</div></div><h3>Whispers</h3><p style="margin: 20px 0; font-size: 16px;">${escapeHtml(message)}</p><button id="customAlertOkBtn" class="game-btn" style="background:#4a90e2;">OK</button></div>`; document.body.appendChild(modalDiv); activeDialogElement = modalDiv; const okBtn = modalDiv.querySelector('#customAlertOkBtn'); const closeHandler = () => { modalDiv.remove(); if (activeDialogElement === modalDiv) activeDialogElement = null; resolve(); activeDialogResolve = null; }; okBtn.onclick = closeHandler; modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) closeHandler(); }); }); }
-  function showPrompt(message, defaultValue = '') { return new Promise((resolve) => { closeCustomDialog(); const modalDiv = document.createElement('div'); modalDiv.className = 'modal'; modalDiv.style.display = 'flex'; modalDiv.innerHTML = `<div class="modal-card" style="max-width: 450px;"><div style="display:flex; justify-content:center; margin-bottom:10px;"><div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#4a90e2,#2c6eb3); display:flex; align-items:center; justify-content:center; font-size:24px; color:white;"><i class="fas fa-question"></i></div></div><h3>Whispers</h3><p style="margin: 16px 0 8px; font-size: 15px;">${escapeHtml(message)}</p><input type="text" id="customPromptInput" class="custom-dialog-input" value="${escapeHtml(defaultValue)}" placeholder="Type here..."><div style="display: flex; gap: 12px; justify-content: center; margin-top: 8px;"><button id="customPromptCancelBtn" class="game-btn" style="background:#aaa;">Cancel</button><button id="customPromptOkBtn" class="game-btn" style="background:#4a90e2;">OK</button></div></div>`; document.body.appendChild(modalDiv); activeDialogElement = modalDiv; const input = modalDiv.querySelector('#customPromptInput'); input.focus(); const okBtn = modalDiv.querySelector('#customPromptOkBtn'); const cancelBtn = modalDiv.querySelector('#customPromptCancelBtn'); const cleanup = (result) => { modalDiv.remove(); if (activeDialogElement === modalDiv) activeDialogElement = null; resolve(result); activeDialogResolve = null; }; okBtn.onclick = () => cleanup(input.value); cancelBtn.onclick = () => cleanup(null); modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) cleanup(null); }); input.addEventListener('keypress', (e) => { if (e.key === 'Enter') cleanup(input.value); }); }); }
-  window.alert = async function(msg) { await showAlert(msg); };
-  window.prompt = async function(msg, def) { return await showPrompt(msg, def); };
-
+  // ======================= Firebase Core =======================
   const firebaseConfig = { apiKey: "AIzaSyAmgvzZju_GbPdUDDHqFg4AN54xnJ4LwW8", authDomain: "whispers-4d04e.firebaseapp.com", projectId: "whispers-4d04e", storageBucket: "whispers-4d04e.firebasestorage.app", messagingSenderId: "32971948813", appId: "1:32971948813:web:3ea4e8a242c055a7e52644", measurementId: "G-K4N3XEBZKK" };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(), db = firebase.firestore(), storage = firebase.storage();
   let currentUser = null, currentUserData = null, currentChat = { type: null, id: null }, messagesUnsub = null, typingTimeout = null, typingUnsub = null;
   let chatsUnsubPrivate = null, chatsUnsubGroups = null;
   let isRendering = false;
-
   function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-  const defaultAvatars = ["https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/memo_16.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_9.png","https://cdn.jsdelivr.net/gh/alohe/memojis/png/vibrent_3.png"];
   function isMobile() { return window.innerWidth <= 768; }
-  
-  function formatMessageTime(timestamp) {
-    if (!timestamp) return '';
-    const date = timestamp.toDate();
-    const now = new Date();
-    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const isToday = date >= todayMidnight;
-    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (isToday) return timeStr;
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    return `${month}/${day} ${timeStr}`;
-  }
-  
-  function showChatListView() { 
-    document.body.classList.remove('mobile-chat-active'); 
-    if(messagesUnsub) messagesUnsub(); 
-    if(typingUnsub) typingUnsub(); 
-    currentChat = { type: null, id: null }; 
-    const header = document.getElementById('desktopChatHeader');
-    if(header) header.innerHTML = 'Select a chat';
-    const membersBtn = document.getElementById('membersBtn');
-    if(membersBtn) membersBtn.style.display = 'none';
-    const messagesDiv = document.getElementById('desktopChatMessages');
-    if(messagesDiv) messagesDiv.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-comment-dots"></i><p>Pick a conversation</p></div>';
-    const typingSpan = document.getElementById('typingIndicator');
-    if(typingSpan) typingSpan.innerText = '';
-  }
+  function formatMessageTime(timestamp) { if (!timestamp) return ''; const date = timestamp.toDate(); const now = new Date(); const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()); const isToday = date >= todayMidnight; const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); if (isToday) return timeStr; return `${date.getMonth()+1}/${date.getDate()} ${timeStr}`; }
+  function showChatListView() { document.body.classList.remove('mobile-chat-active'); if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); currentChat = { type: null, id: null }; const header = document.getElementById('desktopChatHeader'); if(header) header.innerHTML = 'Select a chat'; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) membersBtn.style.display = 'none'; const messagesDiv = document.getElementById('desktopChatMessages'); if(messagesDiv) messagesDiv.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-comment-dots"></i><p>Pick a conversation</p></div>'; const typingSpan = document.getElementById('typingIndicator'); if(typingSpan) typingSpan.innerText = ''; }
   function showChatView() { if(isMobile()) document.body.classList.add('mobile-chat-active'); }
-  
   async function updateUserProfile(displayName, avatarURL) { if(!currentUser) return; const updates = {}; if(displayName !== undefined) updates.displayName = displayName; if(avatarURL !== undefined) updates.avatarURL = avatarURL; if(Object.keys(updates).length) await db.collection("users").doc(currentUser.uid).update(updates); if(displayName && displayName !== currentUser.displayName) await currentUser.updateProfile({ displayName }); currentUserData = { ...currentUserData, ...updates }; renderProfileAvatar(); renderChatList(); }
-  async function uploadAvatar(file) { const storageRef = storage.ref(`avatars/${currentUser.uid}`); await storageRef.put(file); const url = await storageRef.getDownloadURL(); await updateUserProfile(undefined, url); return url; }
   function renderProfileAvatar() { const container = document.getElementById('desktopProfileAvatar'); if(!container) return; if(currentUser){ const avatarUrl = currentUserData?.avatarURL; const initial = (currentUserData?.displayName || currentUser?.email || 'U').charAt(0).toUpperCase(); container.innerHTML = avatarUrl ? `<img src="${avatarUrl}" class="profile-avatar">` : `<div class="profile-avatar-placeholder">${initial}</div>`; const avatarDiv = container.firstChild; if(avatarDiv) avatarDiv.addEventListener('click', () => showUserProfile(currentUser.uid)); } else { container.innerHTML = '<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>'; } }
-  
-  async function showUserProfile(userId) {
-    const userDoc = await db.collection("users").doc(userId).get();
-    if(!userDoc.exists) { await showAlert("User not found"); return; }
-    const data = userDoc.data();
-    const modal = document.getElementById('profileModal');
-    const content = document.getElementById('profileViewContent');
-    if(!modal || !content) return;
-    const avatarUrl = data.avatarURL || defaultAvatars[0];
-    content.innerHTML = `
-      <img src="${avatarUrl}" class="profile-avatar-large" style="width:100px; height:100px; border-radius:50%;">
-      <h3>${escapeHtml(data.displayName || userId)}</h3>
-      <p style="color:#6b7b8c;">${escapeHtml(data.email || '')}</p>
-      ${userId !== currentUser.uid ? `<button id="startChatFromProfileBtn" class="game-btn" style="margin-top:8px;"><i class="fas fa-comment"></i> Send Message</button>` : ''}
-    `;
-    modal.style.display = 'flex';
-    if(userId !== currentUser.uid) {
-      const chatBtn = document.getElementById('startChatFromProfileBtn');
-      if(chatBtn) chatBtn.onclick = async () => {
-        modal.style.display = 'none';
-        await startPrivateChat(userId);
-        await renderChatList();
-        await openChat('private', userId);
-      };
-    }
-  }
-
-  async function showGroupMembers(groupId) {
-    const groupDoc = await db.collection("groups").doc(groupId).get();
-    if(!groupDoc.exists) return;
-    const members = groupDoc.data().members || [];
-    const container = document.getElementById('membersListContainer');
-    if(!container) return;
-    container.innerHTML = '';
-    for(let uid of members) {
-      const userDoc = await db.collection("users").doc(uid).get();
-      const name = userDoc.exists ? (userDoc.data().displayName || uid) : uid;
-      const avatar = userDoc.exists ? (userDoc.data().avatarURL || defaultAvatars[0]) : defaultAvatars[0];
-      const item = document.createElement('div');
-      item.className = 'member-item';
-      item.innerHTML = `<img src="${avatar}" style="width:40px; height:40px; border-radius:50%;"><div><strong>${escapeHtml(name)}</strong><br><span style="font-size:12px; color:#6b7b8c;">${uid === currentUser.uid ? 'You' : ''}</span></div>`;
-      item.onclick = () => {
-        const membersModal = document.getElementById('membersModal');
-        if(membersModal) membersModal.style.display = 'none';
-        showUserProfile(uid);
-      };
-      container.appendChild(item);
-    }
-    const membersModal = document.getElementById('membersModal');
-    if(membersModal) membersModal.style.display = 'flex';
-  }
-
-  async function ensureUserDocument(user) { 
-    const userRef = db.collection("users").doc(user.uid); 
-    const snap = await userRef.get(); 
-    if(!snap.exists){ 
-      await userRef.set({ displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp(), avatarURL: null }); 
-      currentUserData = { displayName: user.displayName || user.email, email: user.email, avatarURL: null }; 
-    } else { 
-      currentUserData = snap.data(); 
-      await userRef.update({ online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); 
-    } 
-    renderProfileAvatar(); 
-  }
-  
-  // Unread helpers
-  async function updateUnreadCount(chatType, chatId, members, excludeUserId) {
-    const inc = firebase.firestore.FieldValue.increment(1);
-    const data = {};
-    for(let uid of members) if(uid !== excludeUserId) data[`unreadCounts.${uid}`] = inc;
-    if(chatType === 'group') await db.collection("groups").doc(chatId).update(data).catch(()=>{});
-    else { const ids = [currentUser.uid, chatId].sort(); const convId = ids.join('_'); await db.collection("privateMessages").doc(convId).update(data).catch(()=>{}); }
-  }
-  async function resetUnreadCount(chatType, chatId) {
-    if(!currentUser) return;
-    if(chatType === 'group') await db.collection("groups").doc(chatId).update({ [`unreadCounts.${currentUser.uid}`]: 0 }).catch(()=>{});
-    else { const ids = [currentUser.uid, chatId].sort(); const convId = ids.join('_'); await db.collection("privateMessages").doc(convId).update({ [`unreadCounts.${currentUser.uid}`]: 0 }).catch(()=>{}); }
-  }
-  async function getUnreadCount(chatType, chatId) {
-    if(!currentUser) return 0;
-    if(chatType === 'group') { const doc = await db.collection("groups").doc(chatId).get(); return doc.exists ? (doc.data().unreadCounts?.[currentUser.uid] || 0) : 0; }
-    else { const ids = [currentUser.uid, chatId].sort(); const convId = ids.join('_'); const doc = await db.collection("privateMessages").doc(convId).get(); return doc.exists ? (doc.data().unreadCounts?.[currentUser.uid] || 0) : 0; }
-  }
-  async function updateLastMessage(chatType, chatId, messageText, senderName) {
-    const preview = messageText.length > 40 ? messageText.substring(0,40)+'…' : messageText;
-    const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-    if(chatType === 'group') await db.collection("groups").doc(chatId).update({ lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName }).catch(()=>{});
-    else {
-      const otherId = chatId;
-      const myPreview = { lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName };
-      await db.collection("privateChats").doc(currentUser.uid).set({ [otherId]: myPreview }, { merge: true });
-      await db.collection("privateChats").doc(otherId).set({ [currentUser.uid]: myPreview }, { merge: true });
-      const ids = [currentUser.uid, otherId].sort(); const convId = ids.join('_');
-      await db.collection("privateMessages").doc(convId).set({ lastMessage: preview, lastMessageTime: timestamp }, { merge: true }).catch(()=>{});
-    }
-  }
-
-  function subscribeToChatList() {
-    if (chatsUnsubPrivate) chatsUnsubPrivate();
-    if (chatsUnsubGroups) chatsUnsubGroups();
-    if (!currentUser) return;
-    chatsUnsubPrivate = db.collection("privateChats").doc(currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err));
-    chatsUnsubGroups = db.collection("groups").where("members", "array-contains", currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err));
-  }
-  function unsubscribeChatList() { if (chatsUnsubPrivate) { chatsUnsubPrivate(); chatsUnsubPrivate = null; } if (chatsUnsubGroups) { chatsUnsubGroups(); chatsUnsubGroups = null; } }
-
-  function startTyping() { if(!currentChat.id || !currentUser) return; const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')); })(); ref.update({ [`typing.${currentUser.uid}`]: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{}); if(typingTimeout) clearTimeout(typingTimeout); typingTimeout = setTimeout(()=>{ ref.update({ [`typing.${currentUser.uid}`]: firebase.firestore.FieldValue.delete() }).catch(()=>{}); }, 1500); }
-  function stopTyping() { if(typingTimeout) clearTimeout(typingTimeout); if(!currentChat.id || !currentUser) return; const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')); })(); ref.update({ [`typing.${currentUser.uid}`]: firebase.firestore.FieldValue.delete() }).catch(()=>{}); }
-  function listenTyping() { 
-    if(typingUnsub) typingUnsub(); 
-    if(!currentChat.id || !currentUser) return; 
-    const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')); })();
-    typingUnsub = ref.onSnapshot(async (doc) => { 
-      if(!doc.exists) return; 
-      const typingMap = doc.data().typing || {}; 
-      const now = Date.now();
-      const typingUsers = Object.keys(typingMap).filter(uid => uid !== currentUser.uid && typingMap[uid] && (now - typingMap[uid].toMillis?.() < 3000));
-      const indicatorSpan = document.getElementById('typingIndicator');
-      if(!indicatorSpan) return;
-      if(typingUsers.length === 0) { indicatorSpan.innerText = ''; return; }
-      if(currentChat.type === 'group') {
-        if(typingUsers.length === 1) {
-          const uid = typingUsers[0];
-          const userSnap = await db.collection("users").doc(uid).get();
-          const name = userSnap.exists ? (userSnap.data().displayName || 'Someone') : 'Someone';
-          indicatorSpan.innerText = `${name} is typing...`;
-        } else indicatorSpan.innerText = 'Several people are typing...';
-      } else indicatorSpan.innerText = 'typing...';
-    }); 
-  }
-
-  // Edit/Delete message functions
-  async function editMessage(chatType, chatId, messageId, oldText) {
-    const newText = await showPrompt("Edit your message:", oldText);
-    if(newText && newText.trim() && newText.trim() !== oldText) {
-      let messageRef;
-      if(chatType === 'group') messageRef = db.collection("groups").doc(chatId).collection("messages").doc(messageId);
-      else { const ids = [currentUser.uid, chatId].sort(); const convId = ids.join('_'); messageRef = db.collection("privateMessages").doc(convId).collection("messages").doc(messageId); }
-      await messageRef.update({ text: newText.trim() });
-    }
-  }
-  async function deleteMessage(chatType, chatId, messageId) {
-    const confirm = await showPrompt("Are you sure you want to delete this message? Type 'DELETE' to confirm.", "");
-    if(confirm === "DELETE") {
-      let messageRef;
-      if(chatType === 'group') messageRef = db.collection("groups").doc(chatId).collection("messages").doc(messageId);
-      else { const ids = [currentUser.uid, chatId].sort(); const convId = ids.join('_'); messageRef = db.collection("privateMessages").doc(convId).collection("messages").doc(messageId); }
-      await messageRef.delete();
-    }
-  }
-
-  async function sendMessage(text, attachments) { 
-    if(!currentChat.id || !currentUser) return; 
-    if(!text.trim() && (!attachments || attachments.length===0)) return; 
-    const msgText = text.trim(); 
-    const msg = { text: msgText, senderId: currentUser.uid, senderName: currentUserData?.displayName || currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp(), attachments: attachments || [] }; 
-    let members = []; 
-    if(currentChat.type === 'group') { 
-      const groupSnap = await db.collection("groups").doc(currentChat.id).get(); 
-      members = groupSnap.data()?.members || []; 
-      await db.collection("groups").doc(currentChat.id).collection("messages").add(msg); 
-    } else { 
-      const ids = [currentUser.uid, currentChat.id].sort(); 
-      const convId = ids.join('_'); 
-      await db.collection("privateMessages").doc(convId).collection("messages").add(msg); 
-      members = [currentUser.uid, currentChat.id]; 
-    } 
-    const previewText = msgText || (attachments && attachments[0]?.name) || '📎 Attachment';
-    await updateLastMessage(currentChat.type, currentChat.id, previewText, msg.senderName);
-    await updateUnreadCount(currentChat.type, currentChat.id, members, currentUser.uid);
-    stopTyping();
-    const inputField = document.getElementById('desktopMessageInput');
-    if(inputField) inputField.value = '';
-  }
-
-  async function attachFile() { if(!currentChat.id || !currentUser) { await showAlert("Select a chat first"); return; } const input = document.createElement('input'); input.type='file'; input.accept='image/*,video/*,audio/*,application/pdf'; input.onchange=async(e)=>{ const file=e.target.files[0]; if(!file) return; const fileRef=storage.ref(`attachments/${Date.now()}_${file.name}`); await fileRef.put(file); const url=await fileRef.getDownloadURL(); let type=file.type.split('/')[0]; if(!['image','video','audio'].includes(type)) type='document'; await sendMessage('', [{type,url,name:file.name}]); }; input.click(); }
-  
-  async function createGroup(name, memberIds) {
-    if (!currentUser) return null;
-    const existingGroupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get();
-    let duplicate = false;
-    existingGroupsSnap.forEach(doc => { if (doc.data().name.toLowerCase() === name.toLowerCase()) duplicate = true; });
-    if (duplicate) { await showAlert(`You already have a group named "${name}". Please choose a different name.`); return null; }
-    const groupRef = db.collection("groups").doc();
-    await groupRef.set({ name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], createdAt: firebase.firestore.FieldValue.serverTimestamp(), unreadCounts: {}, typing: {}, lastMessage: '', lastMessageTime: null });
-    return groupRef.id;
-  }
-  
-  async function startPrivateChat(otherUserId) { const ids=[currentUser.uid, otherUserId].sort(); const convId=ids.join('_'); await db.collection("privateMessages").doc(convId).set({ participants: [currentUser.uid, otherUserId], unreadCounts: {}, typing: {} }, { merge: true }); await db.collection("privateChats").doc(currentUser.uid).set({ [otherUserId]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); await db.collection("privateChats").doc(otherUserId).set({ [currentUser.uid]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); }
-
-  async function renderChatList() { 
-    if (!currentUser || isRendering) return;
-    isRendering = true;
-    try {
-      const groupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get();
-      const groupsMap = new Map(); groupsSnap.forEach(doc => { groupsMap.set(doc.id, { id: doc.id, ...doc.data() }); });
-      const privateChatsSnap = await db.collection("privateChats").doc(currentUser.uid).get();
-      const privateRaw = privateChatsSnap.exists ? privateChatsSnap.data() : {};
-      const privateMap = new Map(); for (let otherId of Object.keys(privateRaw)) privateMap.set(otherId, privateRaw[otherId]);
-      const container = document.getElementById('desktopChatList'); 
-      if(!container) return;
-      container.innerHTML = '';
-      if (groupsMap.size === 0 && privateMap.size === 0) { container.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-plus-circle"></i><h3>No chats</h3><p>Tap + to start a conversation</p></div>'; return; }
-      if (groupsMap.size > 0) {
-        const groupsHeader = document.createElement('div'); groupsHeader.className = 'section-header'; groupsHeader.innerHTML = '<i class="fas fa-users" style="margin-right: 6px;"></i> GROUP CHATS'; container.appendChild(groupsHeader);
-        for (let [id, grp] of groupsMap.entries()) {
-          const unread = await getUnreadCount('group', id); const lastMsg = grp.lastMessage ? (grp.lastSender ? `${grp.lastSender}: ${grp.lastMessage}` : grp.lastMessage) : 'No messages yet';
-          const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(grp.name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`;
-          item.onclick = async () => { await openChat('group', id); }; container.appendChild(item);
-        }
-      }
-      if (privateMap.size > 0) {
-        const privateHeader = document.createElement('div'); privateHeader.className = 'section-header'; privateHeader.innerHTML = '<i class="fas fa-user-friends" style="margin-right: 6px;"></i> PRIVATE CHATS'; container.appendChild(privateHeader);
-        for (let [otherId, chatData] of privateMap.entries()) {
-          const userSnap = await db.collection("users").doc(otherId).get(); const name = userSnap.exists ? (userSnap.data().displayName || otherId) : otherId;
-          const unread = await getUnreadCount('private', otherId); let lastMsg = chatData.lastMessage || 'No messages yet'; if (chatData.lastSender && chatData.lastSender !== currentUser.uid) lastMsg = `${chatData.lastSender}: ${lastMsg}`;
-          const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`;
-          item.onclick = async () => { await openChat('private', otherId); }; container.appendChild(item);
-        }
-      }
-    } finally { isRendering = false; }
-  }
-
-  async function openChat(type, id) { 
-    if(!currentUser) return; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); currentChat = { type, id }; 
-    await resetUnreadCount(type, id); renderChatList();
-    let title = ''; if(type==='group') { const snap=await db.collection("groups").doc(id).get(); title=snap.exists?snap.data().name:'Group'; } else { const snap=await db.collection("users").doc(id).get(); title=snap.exists?(snap.data().displayName||id):id; }
-    const header = document.getElementById('desktopChatHeader');
-    if(header) header.innerHTML = `<i class="${type==='group'?'fas fa-users':'fas fa-user'}"></i> ${escapeHtml(title)}`;
-    const membersBtn = document.getElementById('membersBtn');
-    if(membersBtn) {
-      membersBtn.style.display = type==='group' ? 'flex' : 'none';
-      if(type==='group') membersBtn.onclick = () => showGroupMembers(id);
-    }
-    if(type!=='group' && header) header.onclick = () => showUserProfile(id);
-    let messagesRef; 
-    if(type==='group') messagesRef = db.collection("groups").doc(id).collection("messages").orderBy("timestamp","asc"); 
-    else { const ids=[currentUser.uid,id].sort(); const convId=ids.join('_'); messagesRef = db.collection("privateMessages").doc(convId).collection("messages").orderBy("timestamp","asc"); }
-    messagesUnsub = messagesRef.onSnapshot(async (snap) => { 
-      const container = document.getElementById('desktopChatMessages'); 
-      if(!container) return;
-      container.innerHTML = ''; 
-      snap.forEach(doc => { 
-        const msg = doc.data(); const isSelf = msg.senderId === currentUser.uid; const messageId = doc.id;
-        const row = document.createElement('div'); row.className = `message-row ${isSelf?'sent':'received'}`; 
-        const bubble = document.createElement('div'); bubble.className = 'message-bubble'; 
-        if (currentChat.type === 'group') { 
-          const senderSpan = document.createElement('div'); senderSpan.className = 'sender-name'; 
-          if (!isSelf) senderSpan.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.senderName || msg.senderId)}`; 
-          else senderSpan.innerHTML = `<i class="fas fa-check-double"></i> You`; 
-          senderSpan.onclick = (e) => { e.stopPropagation(); showUserProfile(msg.senderId); };
-          bubble.appendChild(senderSpan); 
-        } else if(!isSelf) {
-          bubble.style.cursor = 'pointer';
-          bubble.onclick = () => showUserProfile(msg.senderId);
-        }
-        const textSpan = document.createElement('div'); textSpan.className = 'message-text'; 
-        let text = escapeHtml(msg.text); text = text.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" style="color:#2c6eb3;">$1</a>'); 
-        textSpan.innerHTML = text; bubble.appendChild(textSpan); 
-        if(msg.attachments && msg.attachments.length){ 
-          msg.attachments.forEach(att => { 
-            const attDiv = document.createElement('div'); attDiv.className = 'attachment'; 
-            if(att.type==='image') attDiv.innerHTML = `<img src="${att.url}" style="max-width:100%; max-height:200px; border-radius:8px;">`; 
-            else if(att.type==='video') attDiv.innerHTML = `<video controls src="${att.url}" style="max-width:100%; max-height:200px;"></video>`; 
-            else if(att.type==='audio') attDiv.innerHTML = `<audio controls src="${att.url}"></audio>`; 
-            else attDiv.innerHTML = `<i class="fas fa-file-alt"></i> <a href="${att.url}" download="${att.name}">${att.name}</a>`; 
-            bubble.appendChild(attDiv); 
-          }); 
-        } 
-        const timeSpan = document.createElement('div'); timeSpan.className = 'message-time'; 
-        if(msg.timestamp) timeSpan.innerText = formatMessageTime(msg.timestamp); 
-        bubble.appendChild(timeSpan);
-        if(isSelf) {
-          const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions';
-          actionsDiv.innerHTML = `<button class="edit-msg"><i class="fas fa-edit"></i></button><button class="delete-msg"><i class="fas fa-trash-alt"></i></button>`;
-          actionsDiv.querySelector('.edit-msg').onclick = (e) => { e.stopPropagation(); editMessage(currentChat.type, currentChat.id, messageId, msg.text); };
-          actionsDiv.querySelector('.delete-msg').onclick = (e) => { e.stopPropagation(); deleteMessage(currentChat.type, currentChat.id, messageId); };
-          bubble.appendChild(actionsDiv);
-        }
-        row.appendChild(bubble); container.appendChild(row); 
-      }); 
-      container.scrollTop = container.scrollHeight; 
-      if (currentChat.id === id && currentChat.type === type) { await resetUnreadCount(type, id); renderChatList(); }
-    }); 
-    listenTyping(); showChatView(); 
-  }
-
-  // Brick Breaker Game (simplified but functional)
-  let gameAnimationId=null; function showGamesModal(){ if(!currentUser){ showAlert("Sign in to play"); return; } if(gameAnimationId) cancelAnimationFrame(gameAnimationId); const modal=document.createElement('div'); modal.className='modal'; modal.style.display='flex'; modal.innerHTML=`<div class="modal-card"><h3><i class="fas fa-gamepad"></i> Brick Breaker · Level <span id="levelNum">1</span>/7</h3><div class="game-container"><canvas id="brickCanvas" width="700" height="450" style="width:100%; max-width:700px; aspect-ratio:700/450"></canvas><div class="game-stats"><div>💥 Score: <span id="gameScore">0</span></div><div>❤️ Lives: <span id="gameLives">3</span></div><div>🏆 Level: <span id="gameLevel">1</span></div></div><div class="game-controls"><button id="restartGameBtn" class="game-btn">🔄 Restart</button><button id="closeGameModalBtn" class="game-btn">✖ Close</button></div></div></div>`; document.body.appendChild(modal); const canvas=modal.querySelector('#brickCanvas'), ctx=canvas.getContext('2d'); let gameRunning=true,score=0,lives=3,currentLevel=1; let ball={x:canvas.width/2,y:canvas.height-50,dx:3.5,dy:-3.8,radius:6}; let paddle={width:90,height:12,x:(canvas.width-90)/2}; let bricks=[]; const brickRowColors=['#FF5252','#FFC107','#4CAF50','#2196F3','#9C27B0','#FF9800','#E91E63']; let rightPressed=false,leftPressed=false,mouseX=0; function initLevel(level){ bricks=[]; const rows=Math.min(3+level,9), bricksPerRow=9, brickWidth=(canvas.width-40)/bricksPerRow, brickHeight=18; for(let r=0;r<rows;r++) for(let c=0;c<bricksPerRow;c++) bricks.push({x:20+c*brickWidth,y:50+r*(brickHeight+4),w:brickWidth-2,h:brickHeight,status:1,color:brickRowColors[r%brickRowColors.length]}); let speed=3.2+(level-1)*0.2; ball.dx=ball.dx>0?speed:-speed; ball.dy=-Math.abs(ball.dy); if(ball.dy>-3) ball.dy=-3.5; } function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); bricks.forEach(b=>{ if(b.status){ ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle='#ffffff80'; ctx.strokeRect(b.x,b.y,b.w,b.h); } }); ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fillStyle='#FFD966'; ctx.fill(); ctx.fillStyle='#4a90e2'; ctx.fillRect(paddle.x,canvas.height-paddle.height-5,paddle.width,paddle.height); } async function update(){ if(!gameRunning) return; ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x+ball.radius>canvas.width||ball.x-ball.radius<0) ball.dx=-ball.dx; if(ball.y-ball.radius<0) ball.dy=-ball.dy; if(ball.y+ball.radius>canvas.height){ lives--; document.getElementById('gameLives').innerText=lives; if(lives<=0){ gameRunning=false; await showAlert('Game Over'); return; } ball.x=canvas.width/2; ball.y=canvas.height-50; ball.dx=ball.dx>0?3.5:-3.5; ball.dy=-3.8; paddle.x=(canvas.width-paddle.width)/2; } if(ball.y+ball.radius>=canvas.height-paddle.height-5 && ball.x+ball.radius>paddle.x && ball.x-ball.radius<paddle.x+paddle.width){ let hitPos=(ball.x-paddle.x)/paddle.width; let angle=(hitPos-0.5)*1.2; ball.dx=angle*5; ball.dy=-Math.abs(ball.dy); } let allCleared=true; for(let i=0;i<bricks.length;i++){ let b=bricks[i]; if(b.status){ allCleared=false; if(ball.x+ball.radius>b.x && ball.x-ball.radius<b.x+b.w && ball.y+ball.radius>b.y && ball.y-ball.radius<b.y+b.h){ b.status=0; score+=10; document.getElementById('gameScore').innerText=score; let overlapL=(ball.x+ball.radius)-b.x, overlapR=(b.x+b.w)-(ball.x-ball.radius), overlapT=(ball.y+ball.radius)-b.y, overlapB=(b.y+b.h)-(ball.y-ball.radius); if(Math.min(overlapL,overlapR)<Math.min(overlapT,overlapB)) ball.dx=-ball.dx; else ball.dy=-ball.dy; break; } } } if(allCleared){ if(currentLevel<7){ currentLevel++; document.getElementById('levelNum').innerText=currentLevel; document.getElementById('gameLevel').innerText=currentLevel; score+=50; document.getElementById('gameScore').innerText=score; initLevel(currentLevel); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; } else { gameRunning=false; await showAlert('🎉 Victory!'); modal.remove(); return; } } if(rightPressed && paddle.x<canvas.width-paddle.width) paddle.x+=9; if(leftPressed && paddle.x>0) paddle.x-=9; if(mouseX>0){ let nx=mouseX-paddle.width/2; if(nx<0) nx=0; if(nx>canvas.width-paddle.width) nx=canvas.width-paddle.width; paddle.x=nx; } draw(); gameAnimationId=requestAnimationFrame(update); } function handleMouseMove(e){ const rect=canvas.getBoundingClientRect(); const scaleX=canvas.width/rect.width; let clientX=e.touches?e.touches[0].clientX:e.clientX; mouseX=(clientX-rect.left)*scaleX; } function handleKeyDown(e){ if(e.key==='ArrowRight') rightPressed=true; else if(e.key==='ArrowLeft') leftPressed=true; } function handleKeyUp(e){ if(e.key==='ArrowRight') rightPressed=false; else if(e.key==='ArrowLeft') leftPressed=false; } window.addEventListener('keydown',handleKeyDown); window.addEventListener('keyup',handleKeyUp); canvas.addEventListener('mousemove',handleMouseMove); canvas.addEventListener('touchmove',handleMouseMove); initLevel(1); update(); modal.querySelector('#restartGameBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); score=0; lives=3; currentLevel=1; document.getElementById('gameScore').innerText=0; document.getElementById('gameLives').innerText=3; document.getElementById('gameLevel').innerText=1; document.getElementById('levelNum').innerText=1; gameRunning=true; initLevel(1); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; update(); }; modal.querySelector('#closeGameModalBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); window.removeEventListener('keydown',handleKeyDown); window.removeEventListener('keyup',handleKeyUp); modal.remove(); }; modal.addEventListener('click',(e)=>{ if(e.target===modal){ cancelAnimationFrame(gameAnimationId); modal.remove(); } }); }
-
-  async function showPlusMenu(){ if(!currentUser) return; let menu=document.querySelector('.plus-menu'); if(menu) menu.remove(); const div=document.createElement('div'); div.className='plus-menu'; div.innerHTML=`<div class="plus-menu-item" id="newPrivate"><i class="fas fa-user-plus"></i> New Chat</div><div class="plus-menu-item" id="newGroup"><i class="fas fa-users"></i> New Group</div>`; document.body.appendChild(div); const close=()=>div.remove(); setTimeout(()=>document.addEventListener('click',close,{once:true}),100); document.getElementById('newPrivate').onclick=async()=>{ div.remove(); const email = await showPrompt("Enter user email:"); if(email && email.trim()){ const usersSnap=await db.collection("users").where("email","==",email.trim()).get(); if(!usersSnap.empty){ const otherId=usersSnap.docs[0].id; await startPrivateChat(otherId); await renderChatList(); } else await showAlert("User not found"); } }; document.getElementById('newGroup').onclick=async()=>{ div.remove(); const name = await showPrompt("Group name:"); if(name && name.trim()){ const groupId = await createGroup(name.trim(), []); if (groupId) { await renderChatList(); await openChat('group', groupId); } } }; }
-
-  function setLoggedOutUI(){ 
-    currentUser=null; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); unsubscribeChatList(); currentChat={type:null,id:null}; 
-    const authBtn = document.getElementById('authActionBtn');
-    if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'; authBtn.onclick=()=>document.getElementById('authModal').style.display='flex'; }
-    const profileContainer = document.getElementById('desktopProfileAvatar');
-    if(profileContainer) profileContainer.innerHTML='<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>';
-    const chatList = document.getElementById('desktopChatList');
-    if(chatList) chatList.innerHTML='<div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome</h3><p>Sign in to start</p></div>';
-    const header = document.getElementById('desktopChatHeader');
-    if(header) header.innerHTML='Select a chat';
-    const membersBtn = document.getElementById('membersBtn');
-    if(membersBtn) membersBtn.style.display='none';
-    const messagesDiv = document.getElementById('desktopChatMessages');
-    if(messagesDiv) messagesDiv.innerHTML='<div class="welcome-placeholder"><i class="fas fa-lock"></i><h3>Private chats</h3><p>Sign in to view messages</p></div>';
-    const typingSpan = document.getElementById('typingIndicator');
-    if(typingSpan) typingSpan.innerText = '';
-    const inputArea = document.querySelector('.input-area');
-    if(inputArea) inputArea.style.display='none';
-    const fab = document.getElementById('desktopFabPlus');
-    if(fab) fab.style.display='none';
-    const gameMenu = document.getElementById('gameMenuDesktop');
-    if(gameMenu) gameMenu.style.display='none';
-    const msgInput = document.getElementById('desktopMessageInput');
-    if(msgInput) msgInput.disabled = true;
-    showChatListView(); 
-  }
-  async function setLoggedInUI(user){ 
-    currentUser=user; await ensureUserDocument(user); subscribeToChatList(); await renderChatList(); showChatListView(); 
-    const authBtn = document.getElementById('authActionBtn');
-    if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-out-alt"></i>'; authBtn.onclick=async()=>{ await auth.signOut(); setLoggedOutUI(); }; }
-    const inputArea = document.querySelector('.input-area');
-    if(inputArea) inputArea.style.display='flex';
-    const fab = document.getElementById('desktopFabPlus');
-    if(fab) fab.style.display='flex';
-    const gameMenu = document.getElementById('gameMenuDesktop');
-    if(gameMenu) gameMenu.style.display='flex';
-    const msgInput = document.getElementById('desktopMessageInput');
-    if(msgInput) msgInput.disabled = false;
-    renderProfileAvatar(); 
-  }
+  async function showUserProfile(userId) { const userDoc = await db.collection("users").doc(userId).get(); if(!userDoc.exists) { await alert("User not found"); return; } const data = userDoc.data(); const modal = document.getElementById('profileModal'); if(!modal) return; const content = document.getElementById('profileViewContent'); if(content) content.innerHTML = `<img src="${data.avatarURL || 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png'}" class="profile-avatar-large" style="width:100px; height:100px; border-radius:50%;"><h3>${escapeHtml(data.displayName || userId)}</h3><p style="color:#6b7b8c;">${escapeHtml(data.email || '')}</p>${userId !== currentUser.uid ? `<button id="startChatFromProfileBtn" class="game-btn" style="margin-top:8px;"><i class="fas fa-comment"></i> Send Message</button>` : ''}`;
+    modal.style.display = 'flex'; if(userId !== currentUser.uid) { const chatBtn = document.getElementById('startChatFromProfileBtn'); if(chatBtn) chatBtn.onclick = async () => { modal.style.display = 'none'; await startPrivateChat(userId); await renderChatList(); await openChat('private', userId); }; } }
+  async function ensureUserDocument(user) { const userRef = db.collection("users").doc(user.uid); const snap = await userRef.get(); if(!snap.exists){ await userRef.set({ displayName: user.displayName || user.email, email: user.email, online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp(), avatarURL: null }); currentUserData = { displayName: user.displayName || user.email, email: user.email, avatarURL: null }; } else { currentUserData = snap.data(); await userRef.update({ online: true, lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); } renderProfileAvatar(); }
+  async function updateUnreadCount(chatType, chatId, members, excludeUserId) { const inc = firebase.firestore.FieldValue.increment(1); const data = {}; for(let uid of members) if(uid !== excludeUserId) data[`unreadCounts.${uid}`] = inc; if(chatType === 'group') await db.collection("groups").doc(chatId).update(data).catch(()=>{}); else { const ids=[currentUser.uid, chatId].sort(); await db.collection("privateMessages").doc(ids.join('_')).update(data).catch(()=>{}); } }
+  async function resetUnreadCount(chatType, chatId) { if(!currentUser) return; if(chatType === 'group') await db.collection("groups").doc(chatId).update({ [`unreadCounts.${currentUser.uid}`]: 0 }).catch(()=>{}); else { const ids=[currentUser.uid, chatId].sort(); await db.collection("privateMessages").doc(ids.join('_')).update({ [`unreadCounts.${currentUser.uid}`]: 0 }).catch(()=>{}); } }
+  async function updateLastMessage(chatType, chatId, messageText, senderName) { const preview = messageText.length > 40 ? messageText.substring(0,40)+'…' : messageText; const timestamp = firebase.firestore.FieldValue.serverTimestamp(); if(chatType === 'group') await db.collection("groups").doc(chatId).update({ lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName }).catch(()=>{}); else { const otherId = chatId; await db.collection("privateChats").doc(currentUser.uid).set({ [otherId]: { lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName } }, { merge: true }); await db.collection("privateChats").doc(otherId).set({ [currentUser.uid]: { lastMessage: preview, lastMessageTime: timestamp, lastSender: senderName } }, { merge: true }); } }
+  function subscribeToChatList() { if (chatsUnsubPrivate) chatsUnsubPrivate(); if (chatsUnsubGroups) chatsUnsubGroups(); if (!currentUser) return; chatsUnsubPrivate = db.collection("privateChats").doc(currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err)); chatsUnsubGroups = db.collection("groups").where("members", "array-contains", currentUser.uid).onSnapshot(() => renderChatList(), err => console.warn(err)); }
+  async function renderChatList() { if (!currentUser || isRendering) return; isRendering = true; try { const groupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get(); const groupsMap = new Map(); groupsSnap.forEach(doc => { groupsMap.set(doc.id, { id: doc.id, ...doc.data() }); }); const privateChatsSnap = await db.collection("privateChats").doc(currentUser.uid).get(); const privateRaw = privateChatsSnap.exists ? privateChatsSnap.data() : {}; const privateMap = new Map(); for (let otherId of Object.keys(privateRaw)) privateMap.set(otherId, privateRaw[otherId]); const container = document.getElementById('desktopChatList'); if(!container) return; container.innerHTML = ''; if (groupsMap.size === 0 && privateMap.size === 0) { container.innerHTML = '<div class="welcome-placeholder"><i class="fas fa-plus-circle"></i><h3>No chats</h3><p>Tap + to start a conversation</p></div>'; return; } if (groupsMap.size > 0) { const groupsHeader = document.createElement('div'); groupsHeader.className = 'section-header'; groupsHeader.innerHTML = '<i class="fas fa-users" style="margin-right: 6px;"></i> GROUP CHATS'; container.appendChild(groupsHeader); for (let [id, grp] of groupsMap.entries()) { const unread = (grp.unreadCounts?.[currentUser.uid] || 0); const lastMsg = grp.lastMessage ? (grp.lastSender ? `${grp.lastSender}: ${grp.lastMessage}` : grp.lastMessage) : 'No messages'; const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(grp.name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`; item.onclick = async () => { await openChat('group', id); }; container.appendChild(item); } } if (privateMap.size > 0) { const privateHeader = document.createElement('div'); privateHeader.className = 'section-header'; privateHeader.innerHTML = '<i class="fas fa-user-friends" style="margin-right: 6px;"></i> PRIVATE CHATS'; container.appendChild(privateHeader); for (let [otherId, chatData] of privateMap.entries()) { const userSnap = await db.collection("users").doc(otherId).get(); const name = userSnap.exists ? (userSnap.data().displayName || otherId) : otherId; const ids = [currentUser.uid, otherId].sort(); const convDoc = await db.collection("privateMessages").doc(ids.join('_')).get(); const unread = convDoc.exists ? (convDoc.data().unreadCounts?.[currentUser.uid] || 0) : 0; let lastMsg = chatData.lastMessage || 'No messages yet'; if (chatData.lastSender && chatData.lastSender !== currentUser.uid) lastMsg = `${chatData.lastSender}: ${lastMsg}`; const item = document.createElement('div'); item.className = 'chat-list-item'; item.innerHTML = `<div class="chat-avatar"><i class="fas fa-user"></i></div><div class="chat-info"><div class="chat-name">${escapeHtml(name)}${unread>0?`<span class="unread-badge">${unread}</span>`:''}</div><div class="chat-preview">${escapeHtml(lastMsg)}</div></div>`; item.onclick = async () => { await openChat('private', otherId); }; container.appendChild(item); } } } finally { isRendering = false; } }
+  async function openChat(type, id) { if(!currentUser) return; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); currentChat = { type, id }; await resetUnreadCount(type, id); renderChatList(); let title = ''; if(type==='group') { const snap=await db.collection("groups").doc(id).get(); title=snap.exists?snap.data().name:'Group'; } else { const snap=await db.collection("users").doc(id).get(); title=snap.exists?(snap.data().displayName||id):id; } const header = document.getElementById('desktopChatHeader'); if(header) header.innerHTML = `<i class="${type==='group'?'fas fa-users':'fas fa-user'}"></i> ${escapeHtml(title)}`; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) { membersBtn.style.display = type==='group' ? 'flex' : 'none'; if(type==='group') membersBtn.onclick = () => showGroupMembers(id); } if(type!=='group' && header) header.onclick = () => showUserProfile(id); let messagesRef; if(type==='group') messagesRef = db.collection("groups").doc(id).collection("messages").orderBy("timestamp","asc"); else { const ids=[currentUser.uid,id].sort(); messagesRef = db.collection("privateMessages").doc(ids.join('_')).collection("messages").orderBy("timestamp","asc"); } messagesUnsub = messagesRef.onSnapshot(async (snap) => { const container = document.getElementById('desktopChatMessages'); if(!container) return; container.innerHTML = ''; snap.forEach(doc => { const msg = doc.data(); const isSelf = msg.senderId === currentUser.uid; const row = document.createElement('div'); row.className = `message-row ${isSelf?'sent':'received'}`; const bubble = document.createElement('div'); bubble.className = 'message-bubble'; if (currentChat.type === 'group') { const senderSpan = document.createElement('div'); senderSpan.className = 'sender-name'; senderSpan.innerHTML = !isSelf ? `<i class="fas fa-user-circle"></i> ${escapeHtml(msg.senderName || msg.senderId)}` : `<i class="fas fa-check-double"></i> You`; senderSpan.onclick = (e) => { e.stopPropagation(); showUserProfile(msg.senderId); }; bubble.appendChild(senderSpan); } const textSpan = document.createElement('div'); textSpan.className = 'message-text'; let text = escapeHtml(msg.text); text = text.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" style="color:#2c6eb3;">$1</a>'); textSpan.innerHTML = text; bubble.appendChild(textSpan); if(msg.attachments && msg.attachments.length) msg.attachments.forEach(att => { const attDiv = document.createElement('div'); attDiv.className = 'attachment'; if(att.type==='image') attDiv.innerHTML = `<img src="${att.url}" style="max-width:100%; max-height:200px; border-radius:8px;">`; else if(att.type==='video') attDiv.innerHTML = `<video controls src="${att.url}" style="max-width:100%; max-height:200px;"></video>`; else if(att.type==='audio') attDiv.innerHTML = `<audio controls src="${att.url}"></audio>`; else attDiv.innerHTML = `<i class="fas fa-file-alt"></i> <a href="${att.url}" download="${att.name}">${att.name}</a>`; bubble.appendChild(attDiv); }); const timeSpan = document.createElement('div'); timeSpan.className = 'message-time'; if(msg.timestamp) timeSpan.innerText = formatMessageTime(msg.timestamp); bubble.appendChild(timeSpan); if(isSelf) { const actionsDiv = document.createElement('div'); actionsDiv.className = 'message-actions'; actionsDiv.innerHTML = `<button class="edit-msg"><i class="fas fa-edit"></i></button><button class="delete-msg"><i class="fas fa-trash-alt"></i></button>`; actionsDiv.querySelector('.edit-msg').onclick = (e) => { e.stopPropagation(); const newText = prompt("Edit message:", msg.text); if(newText && newText.trim()) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(doc.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(doc.id); })(); ref.update({ text: newText.trim() }); } }; actionsDiv.querySelector('.delete-msg').onclick = async (e) => { e.stopPropagation(); if(confirm("Delete message?")) { const ref = currentChat.type === 'group' ? db.collection("groups").doc(currentChat.id).collection("messages").doc(doc.id) : (()=>{ const ids=[currentUser.uid, currentChat.id].sort(); return db.collection("privateMessages").doc(ids.join('_')).collection("messages").doc(doc.id); })(); await ref.delete(); } }; bubble.appendChild(actionsDiv); } row.appendChild(bubble); container.appendChild(row); }); container.scrollTop = container.scrollHeight; }); showChatView(); }
+  async function startPrivateChat(otherUserId) { const ids=[currentUser.uid, otherUserId].sort(); await db.collection("privateMessages").doc(ids.join('_')).set({ participants: [currentUser.uid, otherUserId], unreadCounts: {}, typing: {} }, { merge: true }); await db.collection("privateChats").doc(currentUser.uid).set({ [otherUserId]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); await db.collection("privateChats").doc(otherUserId).set({ [currentUser.uid]: { lastMessage: '', lastMessageTime: null } }, { merge: true }); }
+  async function sendMessage(text, attachments) { if(!currentChat.id || !currentUser) return; if(!text.trim() && (!attachments || attachments.length===0)) return; const msgText = text.trim(); const msg = { text: msgText, senderId: currentUser.uid, senderName: currentUserData?.displayName || currentUser.email, timestamp: firebase.firestore.FieldValue.serverTimestamp(), attachments: attachments || [] }; let members = []; if(currentChat.type === 'group') { const groupSnap = await db.collection("groups").doc(currentChat.id).get(); members = groupSnap.data()?.members || []; await db.collection("groups").doc(currentChat.id).collection("messages").add(msg); } else { const ids = [currentUser.uid, currentChat.id].sort(); await db.collection("privateMessages").doc(ids.join('_')).collection("messages").add(msg); members = [currentUser.uid, currentChat.id]; } const previewText = msgText || (attachments && attachments[0]?.name) || '📎 Attachment'; await updateLastMessage(currentChat.type, currentChat.id, previewText, msg.senderName); await updateUnreadCount(currentChat.type, currentChat.id, members, currentUser.uid); const inputField = document.getElementById('desktopMessageInput'); if(inputField) inputField.value = ''; }
+  async function createGroup(name, memberIds) { if (!currentUser) return null; const existingGroupsSnap = await db.collection("groups").where("members", "array-contains", currentUser.uid).get(); let duplicate = false; existingGroupsSnap.forEach(doc => { if (doc.data().name.toLowerCase() === name.toLowerCase()) duplicate = true; }); if (duplicate) { await alert(`Group "${name}" already exists`); return null; } const groupRef = db.collection("groups").doc(); await groupRef.set({ name, members: [currentUser.uid, ...memberIds], admins: [currentUser.uid], createdAt: firebase.firestore.FieldValue.serverTimestamp(), unreadCounts: {}, typing: {}, lastMessage: '', lastMessageTime: null }); return groupRef.id; }
+  function setLoggedOutUI(){ currentUser=null; if(messagesUnsub) messagesUnsub(); if(typingUnsub) typingUnsub(); if(chatsUnsubPrivate) chatsUnsubPrivate(); currentChat={type:null,id:null}; const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'; authBtn.onclick=()=>document.getElementById('authModal').style.display='flex'; } const profileContainer = document.getElementById('desktopProfileAvatar'); if(profileContainer) profileContainer.innerHTML='<div class="profile-avatar-placeholder"><i class="fas fa-user"></i></div>'; const chatListDiv = document.getElementById('desktopChatList'); if(chatListDiv) chatListDiv.innerHTML='<div class="welcome-placeholder"><i class="fas fa-comments"></i><h3>Welcome</h3><p>Sign in to start</p></div>'; const headerDiv = document.getElementById('desktopChatHeader'); if(headerDiv) headerDiv.innerHTML='Select a chat'; const membersBtn = document.getElementById('membersBtn'); if(membersBtn) membersBtn.style.display='none'; const messagesDiv = document.getElementById('desktopChatMessages'); if(messagesDiv) messagesDiv.innerHTML='<div class="welcome-placeholder"><i class="fas fa-lock"></i><h3>Private chats</h3><p>Sign in to view messages</p></div>'; const typingSpan = document.getElementById('typingIndicator'); if(typingSpan) typingSpan.innerText = ''; const inputArea = document.querySelector('.input-area'); if(inputArea) inputArea.style.display='none'; const fab = document.getElementById('desktopFabPlus'); if(fab) fab.style.display='none'; const toolsBtn = document.getElementById('floatingToolsBtn'); if(toolsBtn) toolsBtn.style.display='none'; const msgInput = document.getElementById('desktopMessageInput'); if(msgInput) msgInput.disabled = true; showChatListView(); }
+  async function setLoggedInUI(user){ currentUser=user; await ensureUserDocument(user); subscribeToChatList(); await renderChatList(); showChatListView(); const authBtn = document.getElementById('authActionBtn'); if(authBtn) { authBtn.innerHTML='<i class="fas fa-sign-out-alt"></i>'; authBtn.onclick=async()=>{ await auth.signOut(); setLoggedOutUI(); }; } const inputArea = document.querySelector('.input-area'); if(inputArea) inputArea.style.display='flex'; const fab = document.getElementById('desktopFabPlus'); if(fab) fab.style.display='flex'; const toolsBtn = document.getElementById('floatingToolsBtn'); if(toolsBtn) toolsBtn.style.display='flex'; const msgInput = document.getElementById('desktopMessageInput'); if(msgInput) msgInput.disabled = false; renderProfileAvatar(); }
   auth.onAuthStateChanged(async(user)=>{ if(user){ const authModal = document.getElementById('authModal'); if(authModal) authModal.style.display='none'; await setLoggedInUI(user); } else setLoggedOutUI(); });
+  async function showGroupMembers(groupId) { const groupDoc = await db.collection("groups").doc(groupId).get(); if(!groupDoc.exists) return; const members = groupDoc.data().members || []; const container = document.getElementById('membersListContainer'); if(!container) return; container.innerHTML = ''; for(let uid of members) { const userDoc = await db.collection("users").doc(uid).get(); const name = userDoc.exists ? (userDoc.data().displayName || uid) : uid; const avatar = userDoc.exists ? (userDoc.data().avatarURL || 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png') : 'https://cdn.jsdelivr.net/gh/alohe/memojis/png/teams_5.png'; const item = document.createElement('div'); item.className = 'member-item'; item.innerHTML = `<img src="${avatar}" style="width:40px; height:40px; border-radius:50%;"><div><strong>${escapeHtml(name)}</strong><br><span style="font-size:12px; color:#6b7b8c;">${uid === currentUser.uid ? 'You' : ''}</span></div>`; item.onclick = () => { document.getElementById('membersModal').style.display = 'none'; showUserProfile(uid); }; container.appendChild(item); } document.getElementById('membersModal').style.display = 'flex'; }
+
+  // ======================= TOOLS SECTION =======================
+  function showToolsMenu() { const modal = document.getElementById('toolsModal'); const inner = document.getElementById('toolsSubmenuInner'); if(!modal || !inner) return; inner.innerHTML = `<div class="tools-item" data-tool="games"><i class="fas fa-gamepad"></i> 🎮 Brick Breaker</div><div class="tools-item" data-tool="calc"><i class="fas fa-calculator"></i> 🧮 Calculator</div><div class="tools-item" data-tool="currency"><i class="fas fa-exchange-alt"></i> 💱 Exchange Rates</div><div class="tools-item" data-tool="reader"><i class="fas fa-book-reader"></i> 📖 Whisp Reader (PDF/EPUB)</div>`; modal.style.display = 'flex'; inner.querySelectorAll('.tools-item').forEach(el => { el.addEventListener('click', () => { modal.style.display = 'none'; const tool = el.dataset.tool; if(tool === 'games') showGamesModal(); else if(tool === 'calc') showCalculatorModal(); else if(tool === 'currency') showCurrencyModal(); else if(tool === 'reader') showReaderModal(); }); }); document.getElementById('closeToolsModalBtn').onclick = () => modal.style.display = 'none'; }
+  function showCalculatorModal() { const modal = document.getElementById('calculatorModal'); const screen = document.getElementById('calcScreen'); let current = '0', operator = null, prev = null; const updateScreen = () => { if(screen) screen.innerText = current; }; const compute = () => { if(operator && prev !== null) { const a = parseFloat(prev), b = parseFloat(current); if(operator === '+') current = (a+b).toString(); else if(operator === '-') current = (a-b).toString(); else if(operator === '*') current = (a*b).toString(); else if(operator === '/') current = (a/b).toString(); operator = null; prev = null; updateScreen(); } }; const btns = ['7','8','9','/','4','5','6','*','1','2','3','-','0','C','=','+']; const container = document.getElementById('calcButtons'); if(!container) return; container.innerHTML = ''; btns.forEach(btn => { const b = document.createElement('button'); b.innerText = btn; b.className = 'calc-btn' + (['/','*','-','+','='].includes(btn) ? ' operator' : ''); b.onclick = () => { if(btn === 'C') { current = '0'; operator = null; prev = null; updateScreen(); } else if(btn === '=') { compute(); } else if(['+','-','*','/'].includes(btn)) { if(operator && prev === null) operator = btn; else { compute(); operator = btn; prev = current; current = '0'; } } else { if(current === '0') current = btn; else current += btn; updateScreen(); } }; container.appendChild(b); }); modal.style.display = 'flex'; document.getElementById('closeCalcModalBtn').onclick = () => modal.style.display = 'none'; }
   
-  // Auth modal handlers (safe)
-  const loginTab = document.getElementById('loginTab');
-  if(loginTab) loginTab.onclick=()=>{ const loginPanel = document.getElementById('loginPanel'); const signupPanel = document.getElementById('signupPanel'); if(loginPanel) loginPanel.style.display='block'; if(signupPanel) signupPanel.style.display='none'; };
-  const signupTab = document.getElementById('signupTab');
-  if(signupTab) signupTab.onclick=()=>{ const loginPanel = document.getElementById('loginPanel'); const signupPanel = document.getElementById('signupPanel'); if(loginPanel) loginPanel.style.display='none'; if(signupPanel) signupPanel.style.display='block'; };
-  const doLogin = document.getElementById('doLoginBtn');
-  if(doLogin) doLogin.onclick=async()=>{ try{ await auth.signInWithEmailAndPassword(document.getElementById('loginUsername').value, document.getElementById('loginPassword').value); }catch(e){ const errDiv = document.getElementById('authError'); if(errDiv) errDiv.innerText=e.message; } };
-  const doSignup = document.getElementById('doSignupBtn');
-  if(doSignup) doSignup.onclick=async()=>{ try{ const cred=await auth.createUserWithEmailAndPassword(document.getElementById('signupUsername').value, document.getElementById('signupPassword').value); await cred.user.updateProfile({ displayName: document.getElementById('signupDisplayName').value }); await db.collection("users").doc(cred.user.uid).set({ displayName: document.getElementById('signupDisplayName').value, email: document.getElementById('signupUsername').value, online:true, lastSeen:firebase.firestore.FieldValue.serverTimestamp(), avatarURL:null }); }catch(e){ const errDiv = document.getElementById('authError'); if(errDiv) errDiv.innerText=e.message; } };
-  const googleBtn = document.getElementById('googleLoginBtn');
-  if(googleBtn) googleBtn.onclick=async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ const errDiv = document.getElementById('authError'); if(errDiv) errDiv.innerText=e.message; } };
-  const closeModal = document.getElementById('closeModalBtn');
-  if(closeModal) closeModal.onclick=()=>{ const modal = document.getElementById('authModal'); if(modal) modal.style.display='none'; };
-  const saveProfile = document.getElementById('saveProfileBtn');
-  if(saveProfile) saveProfile.onclick=async()=>{ const newName=document.getElementById('profileDisplayName').value.trim(); if(newName) await updateUserProfile(newName, undefined); const modal = document.getElementById('profileModal'); if(modal) modal.style.display='none'; };
-  const closeProfile = document.getElementById('closeProfileModalBtn');
-  if(closeProfile) closeProfile.onclick=()=>{ const modal = document.getElementById('profileModal'); if(modal) modal.style.display='none'; };
-  const closeMembers = document.getElementById('closeMembersModalBtn');
-  if(closeMembers) closeMembers.onclick=()=>{ const modal = document.getElementById('membersModal'); if(modal) modal.style.display='none'; };
-  const uploadBtn = document.getElementById('uploadAvatarBtn');
-  if(uploadBtn) uploadBtn.onclick=()=>document.getElementById('avatarFileInput').click();
-  const avatarInput = document.getElementById('avatarFileInput');
-  if(avatarInput) avatarInput.onchange=async(e)=>{ if(e.target.files[0]){ await uploadAvatar(e.target.files[0]); const modal = document.getElementById('profileModal'); if(modal) modal.style.display='none'; } };
-  
-  // FIXED: Send button and back button with null checks
-  const sendBtn = document.getElementById('desktopSendBtn');
-  if(sendBtn) {
-    sendBtn.onclick = () => {
-      const input = document.getElementById('desktopMessageInput');
-      if(input && input.value.trim()) {
-        sendMessage(input.value, []);
+  // Exchange rate using fawazahmed0/exchange-api
+  async function fetchExchangeRate(base, target) {
+    const primaryUrl = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.json`;
+    const fallbackUrl = `https://latest.currency-api.pages.dev/v1/currencies/${base.toLowerCase()}.json`;
+    try {
+      const response = await fetch(primaryUrl);
+      if (!response.ok) throw new Error('Primary failed');
+      const data = await response.json();
+      return data[base.toLowerCase()]?.[target.toLowerCase()];
+    } catch (err) {
+      console.warn('Primary API failed, using fallback', err);
+      try {
+        const fallbackRes = await fetch(fallbackUrl);
+        if (!fallbackRes.ok) throw new Error('Fallback failed');
+        const fallbackData = await fallbackRes.json();
+        return fallbackData[base.toLowerCase()]?.[target.toLowerCase()];
+      } catch (fallbackErr) {
+        console.error('Fallback also failed', fallbackErr);
+        return null;
+      }
+    }
+  }
+  async function showCurrencyModal() {
+    const modal = document.getElementById('currencyModal');
+    modal.style.display = 'flex';
+    const fromSel = document.getElementById('fromCurrency');
+    const toSel = document.getElementById('toCurrency');
+    const amountInput = document.getElementById('amountInput');
+    const resultField = document.getElementById('convertedResult');
+    const rateInfo = document.getElementById('rateInfo');
+    const convert = async () => {
+      const from = fromSel.value, to = toSel.value;
+      const amount = parseFloat(amountInput.value) || 0;
+      if (!from || !to) return;
+      rateInfo.innerText = 'Fetching exchange rate...';
+      const rate = await fetchExchangeRate(from, to);
+      if (rate !== null && rate !== undefined) {
+        const converted = amount * rate;
+        resultField.value = converted.toFixed(2);
+        rateInfo.innerText = `1 ${from} = ${rate.toFixed(4)} ${to} (source: fawazahmed0/exchange-api)`;
+      } else {
+        resultField.value = "Error";
+        rateInfo.innerText = "Failed to fetch exchange rate. Please try again later.";
       }
     };
+    const commonCurrencies = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "INR", "NGN", "BRL", "MXN", "KRW", "TRY", "ZAR"];
+    fromSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join('');
+    toSel.innerHTML = commonCurrencies.map(c => `<option value="${c}">${c}</option>`).join('');
+    fromSel.value = "USD";
+    toSel.value = "EUR";
+    document.getElementById('convertCurrencyBtn').onclick = convert;
+    document.getElementById('closeCurrencyModalBtn').onclick = () => modal.style.display = 'none';
+    await convert();
   }
-  const attachBtn = document.getElementById('desktopAttachBtn');
-  if(attachBtn) attachBtn.onclick = attachFile;
-  const fabPlus = document.getElementById('desktopFabPlus');
-  if(fabPlus) fabPlus.onclick = showPlusMenu;
-  const gamesBtn = document.getElementById('desktopGamesBtn');
-  if(gamesBtn) gamesBtn.onclick = showGamesModal;
-  const msgInputField = document.getElementById('desktopMessageInput');
-  if(msgInputField) {
-    msgInputField.addEventListener('keypress', (e) => {
-      if(e.key === 'Enter') {
-        e.preventDefault();
-        if(e.target.value.trim()) sendMessage(e.target.value, []);
-      } else {
-        startTyping();
-      }
-    });
-    msgInputField.addEventListener('blur', () => stopTyping());
-  }
-  const backBtn = document.getElementById('mobileBackBtn');
-  if(backBtn) backBtn.onclick = () => { showChatListView(); };
+  let currentReaderRendition = null;
+  function showReaderModal() { const modal = document.getElementById('readerModal'); const viewerDiv = document.getElementById('readerViewer'); const fileInput = document.getElementById('readerFileInput'); viewerDiv.innerHTML = '📖 Select a PDF or EPUB file to start reading'; fileInput.value = ''; fileInput.onchange = async (e) => { const file = e.target.files[0]; if(!file) return; const url = URL.createObjectURL(file); viewerDiv.innerHTML = '<div style="text-align:center">Loading document...</div>'; if(file.name.endsWith('.pdf')) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; const loadingTask = pdfjsLib.getDocument(url); const pdf = await loadingTask.promise; let allText = ''; for(let i=1; i<=pdf.numPages; i++) { const page = await pdf.getPage(i); const textContent = await page.getTextContent(); const strings = textContent.items.map(item => item.str).join(' '); allText += `<p><strong>Page ${i}</strong><br>${escapeHtml(strings)}</p><hr>`; } viewerDiv.innerHTML = allText || '<i>No extractable text</i>'; } else if(file.name.endsWith('.epub')) { try { if(currentReaderRendition) currentReaderRendition.destroy(); const book = ePub(url); const rendition = book.renderTo("readerViewer", { width: "100%", height: "100%" }); rendition.display(); currentReaderRendition = rendition; viewerDiv.innerHTML = ''; viewerDiv.appendChild(rendition.renderer.viewer); } catch(err) { viewerDiv.innerHTML = 'EPUB rendering error: '+err.message; } } else { viewerDiv.innerHTML = 'Unsupported format. Use PDF or EPUB.'; } }; modal.style.display = 'flex'; document.getElementById('closeReaderModalBtn').onclick = () => { if(currentReaderRendition) currentReaderRendition.destroy(); modal.style.display = 'none'; }; }
+  
+  // Brick Breaker Game - slower version
+  let gameAnimationId=null;
+  function showGamesModal(){ if(!currentUser){ alert("Sign in to play"); return; } if(gameAnimationId) cancelAnimationFrame(gameAnimationId); const modal=document.createElement('div'); modal.className='modal'; modal.style.display='flex'; modal.innerHTML=`<div class="modal-card"><h3><i class="fas fa-gamepad"></i> Brick Breaker · Level <span id="levelNum">1</span>/7</h3><div class="game-container"><canvas id="brickCanvas" width="700" height="450" style="width:100%; max-width:700px; aspect-ratio:700/450"></canvas><div class="game-stats"><div>💥 Score: <span id="gameScore">0</span></div><div>❤️ Lives: <span id="gameLives">3</span></div><div>🏆 Level: <span id="gameLevel">1</span></div></div><div class="game-controls"><button id="restartGameBtn" class="game-btn">🔄 Restart</button><button id="closeGameModalBtn" class="game-btn">✖ Close</button></div></div></div>`; document.body.appendChild(modal); const canvas=modal.querySelector('#brickCanvas'), ctx=canvas.getContext('2d'); let gameRunning=true,score=0,lives=3,currentLevel=1; let ball={x:canvas.width/2,y:canvas.height-50,dx:2.8,dy:-3.2,radius:6}; let paddle={width:90,height:12,x:(canvas.width-90)/2}; let bricks=[]; const brickRowColors=['#FF5252','#FFC107','#4CAF50','#2196F3','#9C27B0','#FF9800','#E91E63']; let rightPressed=false,leftPressed=false,mouseX=0; function initLevel(level){ bricks=[]; const rows=Math.min(3+level,9), bricksPerRow=9, brickWidth=(canvas.width-40)/bricksPerRow, brickHeight=18; for(let r=0;r<rows;r++) for(let c=0;c<bricksPerRow;c++) bricks.push({x:20+c*brickWidth,y:50+r*(brickHeight+4),w:brickWidth-2,h:brickHeight,status:1,color:brickRowColors[r%brickRowColors.length]}); let speed=2.8+(level-1)*0.15; ball.dx=ball.dx>0?speed:-speed; ball.dy=-Math.abs(ball.dy); if(ball.dy>-2.8) ball.dy=-2.8; } function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); bricks.forEach(b=>{ if(b.status){ ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle='#ffffff80'; ctx.strokeRect(b.x,b.y,b.w,b.h); } }); ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fillStyle='#FFD966'; ctx.fill(); ctx.fillStyle='#4a90e2'; ctx.fillRect(paddle.x,canvas.height-paddle.height-5,paddle.width,paddle.height); } async function update(){ if(!gameRunning) return; ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x+ball.radius>canvas.width||ball.x-ball.radius<0) ball.dx=-ball.dx; if(ball.y-ball.radius<0) ball.dy=-ball.dy; if(ball.y+ball.radius>canvas.height){ lives--; document.getElementById('gameLives').innerText=lives; if(lives<=0){ gameRunning=false; alert('Game Over'); return; } ball.x=canvas.width/2; ball.y=canvas.height-50; ball.dx=ball.dx>0?2.8:-2.8; ball.dy=-3.0; paddle.x=(canvas.width-paddle.width)/2; } if(ball.y+ball.radius>=canvas.height-paddle.height-5 && ball.x+ball.radius>paddle.x && ball.x-ball.radius<paddle.x+paddle.width){ let hitPos=(ball.x-paddle.x)/paddle.width; let angle=(hitPos-0.5)*1.0; ball.dx=angle*4.5; ball.dy=-Math.abs(ball.dy); } let allCleared=true; for(let i=0;i<bricks.length;i++){ let b=bricks[i]; if(b.status){ allCleared=false; if(ball.x+ball.radius>b.x && ball.x-ball.radius<b.x+b.w && ball.y+ball.radius>b.y && ball.y-ball.radius<b.y+b.h){ b.status=0; score+=10; document.getElementById('gameScore').innerText=score; let overlapL=(ball.x+ball.radius)-b.x, overlapR=(b.x+b.w)-(ball.x-ball.radius), overlapT=(ball.y+ball.radius)-b.y, overlapB=(b.y+b.h)-(ball.y-ball.radius); if(Math.min(overlapL,overlapR)<Math.min(overlapT,overlapB)) ball.dx=-ball.dx; else ball.dy=-ball.dy; break; } } } if(allCleared){ if(currentLevel<7){ currentLevel++; document.getElementById('levelNum').innerText=currentLevel; document.getElementById('gameLevel').innerText=currentLevel; score+=50; document.getElementById('gameScore').innerText=score; initLevel(currentLevel); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; } else { gameRunning=false; alert('🎉 Victory!'); modal.remove(); return; } } if(rightPressed && paddle.x<canvas.width-paddle.width) paddle.x+=7; if(leftPressed && paddle.x>0) paddle.x-=7; if(mouseX>0){ let nx=mouseX-paddle.width/2; if(nx<0) nx=0; if(nx>canvas.width-paddle.width) nx=canvas.width-paddle.width; paddle.x=nx; } draw(); gameAnimationId=requestAnimationFrame(update); } function handleMouseMove(e){ const rect=canvas.getBoundingClientRect(); const scaleX=canvas.width/rect.width; let clientX=e.touches?e.touches[0].clientX:e.clientX; mouseX=(clientX-rect.left)*scaleX; } function handleKeyDown(e){ if(e.key==='ArrowRight') rightPressed=true; else if(e.key==='ArrowLeft') leftPressed=true; } function handleKeyUp(e){ if(e.key==='ArrowRight') rightPressed=false; else if(e.key==='ArrowLeft') leftPressed=false; } window.addEventListener('keydown',handleKeyDown); window.addEventListener('keyup',handleKeyUp); canvas.addEventListener('mousemove',handleMouseMove); canvas.addEventListener('touchmove',handleMouseMove); initLevel(1); update(); modal.querySelector('#restartGameBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); score=0; lives=3; currentLevel=1; document.getElementById('gameScore').innerText=0; document.getElementById('gameLives').innerText=3; document.getElementById('gameLevel').innerText=1; document.getElementById('levelNum').innerText=1; gameRunning=true; initLevel(1); ball.x=canvas.width/2; ball.y=canvas.height-50; paddle.x=(canvas.width-paddle.width)/2; update(); }; modal.querySelector('#closeGameModalBtn').onclick=()=>{ cancelAnimationFrame(gameAnimationId); window.removeEventListener('keydown',handleKeyDown); window.removeEventListener('keyup',handleKeyUp); modal.remove(); }; modal.addEventListener('click',(e)=>{ if(e.target===modal){ cancelAnimationFrame(gameAnimationId); modal.remove(); } }); }
+  
+  // Event listeners
+  document.getElementById('floatingToolsBtn').onclick = showToolsMenu;
+  document.getElementById('desktopSendBtn').onclick = () => { const inp = document.getElementById('desktopMessageInput'); if(inp && inp.value.trim()) sendMessage(inp.value, []); };
+  document.getElementById('desktopAttachBtn').onclick = () => { if(!currentChat.id) return alert("Select a chat first"); const input = document.createElement('input'); input.type='file'; input.accept='image/*,video/*,audio/*,application/pdf'; input.onchange=async(e)=>{ const file=e.target.files[0]; if(!file) return; const fileRef=storage.ref(`attachments/${Date.now()}_${file.name}`); await fileRef.put(file); const url=await fileRef.getDownloadURL(); let type=file.type.split('/')[0]; if(!['image','video','audio'].includes(type)) type='document'; await sendMessage('', [{type,url,name:file.name}]); }; input.click(); };
+  document.getElementById('desktopFabPlus').onclick = async () => { const choice = await prompt("New: 1 - Private chat (email) , 2 - Group"); if(choice === '1'){ const email = await prompt("Enter user email:"); if(email){ const usersSnap=await db.collection("users").where("email","==",email.trim()).get(); if(!usersSnap.empty){ const otherId=usersSnap.docs[0].id; await startPrivateChat(otherId); await renderChatList(); } else alert("User not found"); } } else if(choice === '2'){ const name = await prompt("Group name:"); if(name){ const gid = await createGroup(name.trim(), []); if(gid) { await renderChatList(); await openChat('group', gid); } } } };
+  document.getElementById('mobileBackBtn').onclick = () => showChatListView();
+  const msgInputField = document.getElementById('desktopMessageInput'); if(msgInputField) msgInputField.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); if(e.target.value.trim()) sendMessage(e.target.value, []); } });
+  document.getElementById('closeProfileModalBtn')?.addEventListener('click',()=>document.getElementById('profileModal').style.display='none');
+  document.getElementById('closeMembersModalBtn')?.addEventListener('click',()=>document.getElementById('membersModal').style.display='none');
+  document.getElementById('loginTab')?.addEventListener('click',()=>{ document.getElementById('loginPanel').style.display='block'; document.getElementById('signupPanel').style.display='none'; });
+  document.getElementById('signupTab')?.addEventListener('click',()=>{ document.getElementById('loginPanel').style.display='none'; document.getElementById('signupPanel').style.display='block'; });
+  document.getElementById('doLoginBtn')?.addEventListener('click',async()=>{ try{ await auth.signInWithEmailAndPassword(document.getElementById('loginUsername').value, document.getElementById('loginPassword').value); }catch(e){ document.getElementById('authError').innerText=e.message; } });
+  document.getElementById('doSignupBtn')?.addEventListener('click',async()=>{ try{ const cred=await auth.createUserWithEmailAndPassword(document.getElementById('signupUsername').value, document.getElementById('signupPassword').value); await cred.user.updateProfile({ displayName: document.getElementById('signupDisplayName').value }); await db.collection("users").doc(cred.user.uid).set({ displayName: document.getElementById('signupDisplayName').value, email: document.getElementById('signupUsername').value, online:true, lastSeen:firebase.firestore.FieldValue.serverTimestamp(), avatarURL:null }); }catch(e){ document.getElementById('authError').innerText=e.message; } });
+  document.getElementById('googleLoginBtn')?.addEventListener('click',async()=>{ try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ document.getElementById('authError').innerText=e.message; } });
+  document.getElementById('closeModalBtn')?.addEventListener('click',()=>document.getElementById('authModal').style.display='none');
   window.addEventListener('resize', () => { if(!isMobile() && document.body.classList.contains('mobile-chat-active')) document.body.classList.remove('mobile-chat-active'); });
 </script>
 </body>
